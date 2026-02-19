@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════════════════
+#  PAINPOINT AI — BACKEND REQUIREMENTS
+#  All Python dependencies for the complete system
+# ═══════════════════════════════════════════════════════════
+
+# Core Framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# Environment & Config
+python-dotenv==1.0.1
+
+# LLM API
+groq==0.9.0
+
+# Data Processing
+pandas==2.2.2
+numpy==1.26.4
+
+# Machine Learning
+scikit-learn==1.4.2
+textblob==0.18.0
+
+# HTTP & CORS
+httpx==0.27.0
+
+# Optional: For production deployment
+gunicorn==21.2.0

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PainPoint AI — Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link id="mainStylesheet" rel="stylesheet" href="glass-style.css">
+</head>
+<body>
+  <!-- Background particles -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- Sidebar -->
+  <aside class="glass-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-section">
+        <div class="logo-icon-3d">
+          <div class="cube-face front">P</div>
+          <div class="cube-face back">P</div>
+          <div class="cube-face top">P</div>
+        </div>
+        <div class="logo-text-wrapper">
+          <h1 class="logo-title">PainPoint<span class="ai-accent">AI</span></h1>
+          <p class="logo-sub">Intelligence Platform</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-link active" data-view="overview">
+        <i class="fas fa-th-large"></i>
+        <span>Overview</span>
+        <div class="nav-glow"></div>
+      </a>
+      <a href="#" class="nav-link" data-view="analyze">
+        <i class="fas fa-brain"></i>
+        <span>Analyze</span>
+        <div class="nav-glow"></div>
+      </a>
+      <a href="#" class="nav-link" data-view="intelligence">
+        <i class="fas fa-lightbulb"></i>
+        <span>Intelligence</span>
+        <div class="nav-glow"></div>
+      </a>
+      <a href="#" class="nav-link" data-view="insights">
+        <i class="fas fa-chart-line"></i>
+        <span>Insights</span>
+        <div class="nav-glow"></div>
+      </a>
+      <a href="#" class="nav-link" data-view="export">
+        <i class="fas fa-download"></i>
+        <span>Export</span>
+        <div class="nav-glow"></div>
+      </a>
+      <a href="#" class="nav-link" data-view="about">
+        <i class="fas fa-info-circle"></i>
+        <span>About</span>
+        <div class="nav-glow"></div>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="api-status" id="apiStatusWidget">
+        <div class="status-indicator"></div>
+        <div class="status-text">
+          <span class="status-label">API Status</span>
+          <span class="status-value" id="statusText">Checking...</span>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-container">
+    <!-- Top Bar -->
+    <header class="glass-topbar">
+      <div class="topbar-left">
+        <button class="btn-icon" id="sidebarToggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="page-title-section">
+          <h2 class="page-title" id="pageTitle">Intelligence Overview</h2>
+          <p class="page-subtitle" id="pageSubtitle">Real-time customer insights & decision intelligence</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="badge-pill">
+          <i class="fas fa-robot"></i>
+          Hybrid AI/ML
+        </div>
+        <button class="btn-icon" onclick="openSettings()">
+          <i class="fas fa-cog"></i>
+        </button>
+        <div class="user-avatar" id="userAvatarContainer" style="cursor: pointer;" title="Click to upload profile picture">
+          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="User" />
+        </div>
+        <input type="file" id="avatarUpload" accept="image/*" hidden />
+      </div>
+    </header>
+
+    <!-- View Container -->
+    <div class="content-wrapper">
+      <!-- OVERVIEW VIEW -->
+      <section class="view active" id="view-overview">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon-3d">
+            <i class="fas fa-cube"></i>
+          </div>
+          <h3>No Analysis Data Yet</h3>
+          <p>Upload feedback data or paste text to generate your first intelligence report</p>
+          <button class="btn-gradient" onclick="switchView('analyze')">
+            <i class="fas fa-rocket"></i>
+            Start Analysis
+          </button>
+        </div>
+
+        <div class="stats-grid hidden" id="statsGrid">
+          <div class="glass-card stat-card" data-stat="total">
+            <div class="stat-icon gradient-blue">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value" id="statTotal">—</span>
+              <span class="stat-label">Total Feedback</span>
+            </div>
+            <div class="stat-trend">
+              <i class="fas fa-arrow-up"></i> <span>12%</span>
+            </div>
+          </div>
+
+          <div class="glass-card stat-card" data-stat="critical">
+            <div class="stat-icon gradient-red">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value" id="statCritical">—</span>
+              <span class="stat-label">Critical Issues</span>
+            </div>
+            <div class="stat-trend negative">
+              <i class="fas fa-arrow-down"></i> <span>8%</span>
+            </div>
+          </div>
+
+          <div class="glass-card stat-card" data-stat="category">
+            <div class="stat-icon gradient-purple">
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value" id="statCategory">—</span>
+              <span class="stat-label">Top Category</span>
+            </div>
+          </div>
+
+          <div class="glass-card stat-card" data-stat="emotion">
+            <div class="stat-icon gradient-cyan">
+              <i class="fas fa-smile"></i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value" id="statEmotion">—</span>
+              <span class="stat-label">Top Emotion</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-row hidden" id="chartsRow">
+          <div class="glass-card chart-card-large">
+            <div class="card-header">
+              <div>
+                <h3>Priority Intelligence</h3>
+                <p class="card-subtitle">Frequency × Severity Score</p>
+              </div>
+              <button class="btn-icon-sm">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+            <div class="chart-container">
+              <canvas id="priorityChart"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card chart-card">
+            <div class="card-header">
+              <h3>Severity Distribution</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="severityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="intelligence-row hidden" id="intelligenceRow">
+          <div class="glass-card chart-card">
+            <div class="card-header">
+              <h3>Emotion Analysis</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="emotionChart"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card priority-table-card">
+            <div class="card-header">
+              <h3>Priority Ranking</h3>
+              <span class="badge-pill-sm">Live Data</span>
+            </div>
+            <div id="priorityTableWrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYZE VIEW -->
+      <section class="view" id="view-analyze">
+        <div class="analyze-container">
+          <div class="glass-card analyze-card">
+            <div class="card-header">
+              <div>
+                <h3>AI Analysis Engine</h3>
+                <p class="card-subtitle">Upload CSV or paste feedback for deep intelligence</p>
+              </div>
+            </div>
+
+            <div class="input-tabs">
+              <button class="tab-btn active" data-tab="csv">
+                <i class="fas fa-file-csv"></i>
+                Upload CSV
+              </button>
+              <button class="tab-btn" data-tab="text">
+                <i class="fas fa-align-left"></i>
+                Paste Text
+              </button>
+              <button class="tab-btn" data-tab="single">
+                <i class="fas fa-comment"></i>
+                Single Feedback
+              </button>
+            </div>
+
+            <div class="tab-content active" id="tab-csv">
+              <div class="upload-zone glass" id="uploadZone">
+                <input type="file" id="csvFile" accept=".csv" hidden />
+                <div class="upload-content">
+                  <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                  </div>
+                  <h4>Drop CSV file here</h4>
+                  <p>or <span class="link-text" onclick="document.getElementById('csvFile').click()">browse files</span></p>
+                  <small>Max 50 rows · CSV format only</small>
+                </div>
+                <div class="file-info hidden" id="fileInfo">
+                  <i class="fas fa-file-csv"></i>
+                  <span id="fileName"></span>
+                  <button class="btn-remove" onclick="clearFile()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="input-group">
+                <label>Feedback Column Name <span class="optional-text">(optional)</span></label>
+                <input type="text" class="glass-input" id="colName" placeholder="e.g., review_text" />
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-text">
+              <div class="input-group">
+                <label>Paste Feedback (one per line)</label>
+                <textarea class="glass-textarea" id="rawText" rows="10" placeholder="Payment failed but money was deducted&#10;App crashes every time I try to upload photo&#10;Customer support took 3 weeks to respond"></textarea>
+                <small>Max 50 lines · Each line = one feedback item</small>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-single">
+              <div class="input-group">
+                <label>Single Feedback Analysis</label>
+                <textarea class="glass-textarea" id="singleFeedback" rows="5" placeholder="e.g., Payment failed but money was deducted. No refund after 5 days."></textarea>
+                <small>Get instant detailed analysis for one feedback</small>
+              </div>
+            </div>
+
+            <div class="analyze-footer">
+              <button class="btn-gradient btn-large" id="analyzeBtn" onclick="runAnalysis()">
+                <i class="fas fa-play-circle"></i>
+                <span id="analyzeBtnText">Run AI Analysis</span>
+                <span id="analyzeBtnLoading" class="hidden">
+                  <span class="spinner-ring"></span>
+                  Analyzing...
+                </span>
+              </button>
+              <p class="helper-text">
+                <i class="fas fa-info-circle"></i>
+                Powered by Groq LLaMA 3 + ML Hybrid Engine
+              </p>
+            </div>
+
+            <div class="error-alert hidden" id="errorAlert">
+              <i class="fas fa-exclamation-circle"></i>
+              <span id="errorMsg"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTELLIGENCE VIEW -->
+      <section class="view" id="view-intelligence">
+        <!-- Batch Analysis Summary (shown first) -->
+        <div class="intelligence-grid" id="intelligenceGrid">
+          <div class="glass-card">
+            <div class="card-header">
+              <h3>Executive Summary</h3>
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <pre class="summary-text" id="summaryText">Run analysis to see AI-generated executive intelligence...</pre>
+          </div>
+
+          <div class="glass-card">
+            <div class="card-header">
+              <h3>Feature Recommendations</h3>
+              <i class="fas fa-magic"></i>
+            </div>
+            <div id="featuresContainer"></div>
+          </div>
+        </div>
+
+        <!-- Single Result Detail View (2-column layout) -->
+        <div class="results-detail-container hidden" id="resultsDetailContainer">
+          <!-- LEFT PANEL: Analysis Only -->
+          <div class="glass-card analysis-panel" id="analysisResult">
+            <div class="card-header">
+              <h3><i class="fas fa-microscope"></i> Feedback Analysis</h3>
+              <button class="btn-close-panel" onclick="document.getElementById('resultsDetailContainer').classList.add('hidden'); document.getElementById('intelligenceGrid').classList.remove('hidden');">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div style="padding: 20px; line-height: 1.8;">
+              <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;" id="originalFeedback"></p>
+              <div style="display: grid; gap: 14px;">
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">Pain Point</strong>
+                  <p id="painPoint" style="color: var(--text-secondary); margin: 0; padding: 10px; background: var(--glass-bg-light); border-radius: 6px;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">Category</strong>
+                  <p id="categoryAnalysis" style="margin: 0; padding: 8px 12px; background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.3); border-radius: 6px; width: fit-content; color: var(--secondary); font-weight: 600;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">Severity Level</strong>
+                  <p id="severityAnalysis" style="margin: 0; padding: 8px 12px; border-radius: 6px; width: fit-content; font-weight: 600;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">Emotion Detected</strong>
+                  <p id="emotionAnalysis" style="color: var(--text-secondary); margin: 0; padding: 10px; background: var(--glass-bg-light); border-radius: 6px;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">Root Cause</strong>
+                  <p id="rootCauseAnalysis" style="color: var(--text-secondary); margin: 0; padding: 10px; background: var(--glass-bg-light); border-radius: 6px; line-height: 1.6;"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT PANEL: Intelligent Solution Generation -->
+          <div class="glass-card solution-panel" id="intelligentSolution">
+            <div class="card-header">
+              <h3><i class="fas fa-lightbulb"></i> Intelligent Solution Generation</h3>
+            </div>
+            <div style="padding: 20px; line-height: 1.8;">
+              <div style="display: grid; gap: 16px;">
+                <div>
+                  <strong style="color: var(--success); display: block; margin-bottom: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-check-circle"></i> AI Generated Solution
+                  </strong>
+                  <p id="solutionGenerated" style="color: var(--text-secondary); margin: 0; padding: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; line-height: 1.6;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--warning); display: block; margin-bottom: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-wrench"></i> Recommended Fix
+                  </strong>
+                  <p id="recommendedFix" style="color: var(--text-secondary); margin: 0; padding: 12px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; line-height: 1.6;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-tasks"></i> Actionable Steps
+                  </strong>
+                  <p id="actionableSteps" style="color: var(--text-secondary); margin: 0; padding: 12px; background: var(--glass-bg-light); border: 1px solid var(--glass-border); border-radius: 6px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word;"></p>
+                </div>
+                <div>
+                  <strong style="color: var(--secondary); display: block; margin-bottom: 6px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-star"></i> Improvement Suggestion
+                  </strong>
+                  <p id="improvementSuggestion" style="color: var(--text-secondary); margin: 0; padding: 12px; background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 6px; line-height: 1.6;"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSIGHTS VIEW -->
+      <section class="view" id="view-insights">
+        <div class="glass-card results-card">
+          <div class="card-header">
+            <h3>Detailed Analysis Results</h3>
+            <div class="header-actions">
+              <input type="text" class="search-glass" id="searchInput" placeholder="Search results..." />
+              <select class="filter-glass" id="filterCategory">
+                <option value="">All Categories</option>
+              </select>
+              <select class="filter-glass" id="filterSeverity">
+                <option value="">All Severities</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="glass-table" id="resultsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Feedback</th>
+                  <th>Category</th>
+                  <th>Severity</th>
+                  <th>Emotion</th>
+                  <th>Root Cause</th>
+                  <th>Solution</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody">
+                <tr><td colspan="7" class="empty-row">No results yet. Run analysis first.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPORT VIEW -->
+      <section class="view" id="view-export">
+        <div class="export-grid">
+          <div class="glass-card export-card" onclick="exportToPDF()">
+            <div class="export-icon gradient-red">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <h3>Export to PDF</h3>
+            <p>Download complete report with charts and insights</p>
+            <button class="btn-outline">
+              <i class="fas fa-download"></i>
+              Generate PDF
+            </button>
+          </div>
+
+          <div class="glass-card export-card" onclick="exportToCSV()">
+            <div class="export-icon gradient-green">
+              <i class="fas fa-file-excel"></i>
+            </div>
+            <h3>Export to CSV</h3>
+            <p>Download raw data table for Excel or Sheets</p>
+            <button class="btn-outline">
+              <i class="fas fa-download"></i>
+              Generate CSV
+            </button>
+          </div>
+
+          <div class="glass-card export-card" onclick="exportToJSON()">
+            <div class="export-icon gradient-purple">
+              <i class="fas fa-code"></i>
+            </div>
+            <h3>Export to JSON</h3>
+            <p>Download structured data for API integration</p>
+            <button class="btn-outline">
+              <i class="fas fa-download"></i>
+              Generate JSON
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT VIEW -->
+      <section class="view" id="view-about">
+        <div class="about-container">
+          <!-- Platform Section -->
+          <div class="glass-card about-hero">
+            <div class="about-header">
+              <div class="about-logo-icon">
+                <i class="fas fa-brain"></i>
+              </div>
+              <h2>PainPoint AI Intelligence</h2>
+              <p class="about-tagline">Advanced AI-powered feedback analysis and decision intelligence platform</p>
+            </div>
+          </div>
+
+          <!-- What it does -->
+          <div class="glass-card about-section">
+            <h3><i class="fas fa-rocket"></i> About the Platform</h3>
+            <p>PainPoint AI is a comprehensive intelligence platform designed to extract actionable insights from customer feedback at scale. Using hybrid AI/ML models, it processes unstructured data and transforms it into structured, analyzable intelligence for better decision-making.</p>
+          </div>
+
+          <!-- Key Features -->
+          <div class="glass-card about-section">
+            <h3><i class="fas fa-star"></i> Key Features</h3>
+            <div class="features-grid">
+              <div class="feature-item">
+                <div class="feature-icon gradient-cyan">
+                  <i class="fas fa-comments"></i>
+                </div>
+                <h4>Automatic Review Analysis</h4>
+                <p>AI automatically processes customer reviews and feedback</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-blue">
+                  <i class="fas fa-bullseye"></i>
+                </div>
+                <h4>Pain-Point Detection</h4>
+                <p>Identifies core user problems using NLP</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-purple">
+                  <i class="fas fa-folder-open"></i>
+                </div>
+                <h4>Category Classification</h4>
+                <p>Classifies issues into intelligent categories</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-red">
+                  <i class="fas fa-heart-pulse"></i>
+                </div>
+                <h4>Severity & Emotion Detection</h4>
+                <p>Detects urgency level and user sentiment</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-orange">
+                  <i class="fas fa-magnifying-glass"></i>
+                </div>
+                <h4>Root Cause Analysis</h4>
+                <p>Finds underlying reason behind user complaints</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-green">
+                  <i class="fas fa-lightbulb"></i>
+                </div>
+                <h4>Intelligent Solution Generation</h4>
+                <p>AI suggests actionable solutions automatically</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-indigo">
+                  <i class="fas fa-arrow-up-short-wide"></i>
+                </div>
+                <h4>Priority-Based Issue Ranking</h4>
+                <p>Ranks problems based on impact and frequency</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-pink">
+                  <i class="fas fa-scroll"></i>
+                </div>
+                <h4>Insight Summary Generation</h4>
+                <p>Generates executive-level AI summary</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-teal">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                <h4>Dashboard Visualization</h4>
+                <p>Interactive charts and intelligence dashboard</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-violet">
+                  <i class="fas fa-brain"></i>
+                </div>
+                <h4>LLM-Powered Decision Intelligence</h4>
+                <p>Uses advanced language models for smart decision support</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon gradient-amber">
+                  <i class="fas fa-palette"></i>
+                </div>
+                <h4>Customizable Theme System</h4>
+                <p>Dark, Light, and Auto theme modes with accent color customization</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tech Stack -->
+          <div class="glass-card about-section">
+            <h3><i class="fas fa-code"></i> Technology Stack</h3>
+            <div class="tech-grid">
+              <div class="tech-item">
+                <strong>Frontend</strong>
+                <p>HTML5, CSS3, Vanilla JavaScript, Chart.js</p>
+              </div>
+              <div class="tech-item">
+                <strong>Backend</strong>
+                <p>Python, FastAPI, PostgreSQL</p>
+              </div>
+              <div class="tech-item">
+                <strong>AI/ML</strong>
+                <p>Groq API, GPT Models, NLP Libraries</p>
+              </div>
+              <div class="tech-item">
+                <strong>Infrastructure</strong>
+                <p>RESTful APIs, JWT Authentication, Docker</p>
+              </div>
+              <div class="tech-item">
+                <strong>Design</strong>
+                <p>Glassmorphism, Dark/Light Themes, Responsive</p>
+              </div>
+              <div class="tech-item">
+                <strong>Data Export</strong>
+                <p>jsPDF, CSV generation, JSON formatting</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Developer -->
+          <div class="glass-card about-section">
+            <h3><i class="fas fa-user-circle"></i> Creator</h3>
+            <div class="developer-profile">
+              <div class="dev-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="dev-info">
+                <h4>Development Team</h4>
+                <p class="dev-role">AI/ML Engineer & Full-Stack Developer</p>
+                <p class="dev-bio">Creating intelligent solutions for complex data analysis challenges. Passionate about AI implementation, UI/UX design, and building production-ready applications.</p>
+                <div class="dev-links">
+                  <a href="#" class="dev-link" title="GitHub">
+                    <i class="fab fa-github"></i>
+                  </a>
+                  <a href="#" class="dev-link" title="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                  </a>
+                  <a href="#" class="dev-link" title="Email">
+                    <i class="fas fa-envelope"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version Info -->
+          <div class="glass-card about-footer">
+            <div class="version-info">
+              <p><strong>Version:</strong> 1.0.0</p>
+              <p><strong>Build:</strong> 2026.02.18</p>
+              <p><strong>Status:</strong> Production Ready</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this) closeSettings()">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-cog"></i> Settings & Configuration</h3>
+        <button class="btn-close" onclick="closeSettings()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- 1. USER PROFILE -->
+        <div class="settings-section">
+          <h4><i class="fas fa-user"></i> User Profile</h4>
+          <div class="profile-preview">
+            <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Avatar" />
+          </div>
+          <div class="input-group">
+            <label>Profile Picture</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="file" id="avatarUpload" accept="image/*" hidden />
+              <button class="btn-outline" onclick="document.getElementById('avatarUpload').click()" style="flex: 1;">
+                <i class="fas fa-upload"></i> Upload
+              </button>
+              <button class="btn-outline" onclick="resetAvatar()" style="flex: 1;">
+                <i class="fas fa-redo"></i> Reset
+              </button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" class="glass-input" id="displayName" placeholder="Enter your name" />
+          </div>
+          <div class="input-group">
+            <label>Email</label>
+            <input type="email" class="glass-input" id="userEmail" placeholder="your@email.com" />
+          </div>
+        </div>
+
+        <!-- 2. APPEARANCE -->
+        <div class="settings-section">
+          <h4><i class="fas fa-palette"></i> Appearance</h4>
+          <div class="setting-group">
+            <label>Theme</label>
+            <div class="theme-options">
+              <button class="theme-btn active" data-theme="dark">
+                <i class="fas fa-moon"></i> Dark
+              </button>
+              <button class="theme-btn" data-theme="light">
+                <i class="fas fa-sun"></i> Light
+              </button>
+              <button class="theme-btn" data-theme="auto">
+                <i class="fas fa-adjust"></i> Auto
+              </button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Accent Color</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="color" id="accentColorPicker" value="#00d9ff" style="width: 50px; height: 40px; cursor: pointer; border: none; border-radius: 8px;" />
+              <small>Live preview enabled</small>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Font Size</label>
+            <select class="glass-input" id="fontSizeSelect">
+              <option value="small">Small (90%)</option>
+              <option value="medium" selected>Medium (100%)</option>
+              <option value="large">Large (110%)</option>
+            </select>
+          </div>
+          <div class="toggle-group">
+            <label>Animations</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleAnimations" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. AI & ANALYSIS SETTINGS -->
+        <div class="settings-section">
+          <h4><i class="fas fa-robot"></i> AI & Analysis</h4>
+          <div class="input-group">
+            <label>AI Model</label>
+            <select class="glass-input" id="modelSelect">
+              <option value="llama3" selected>LLaMA 3 (Recommended)</option>
+              <option value="mixtral">Mixtral 8x7B</option>
+              <option value="gemma">Gemma 7B</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Response Style</label>
+            <select class="glass-input" id="responseStyle">
+              <option value="short">Short (Concise)</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="detailed">Detailed (Thorough)</option>
+            </select>
+          </div>
+          <div class="toggle-group">
+            <label>Enable Streaming</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="streamToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-group">
+            <label>Confidence Score</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="confidenceToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. DATA & EXPORT -->
+        <div class="settings-section">
+          <h4><i class="fas fa-download"></i> Data & Export</h4>
+          <div class="input-group">
+            <label>Default Export Format</label>
+            <select class="glass-input" id="exportFormat">
+              <option value="pdf" selected>PDF Report</option>
+              <option value="csv">CSV Spreadsheet</option>
+              <option value="json">JSON Data</option>
+            </select>
+          </div>
+          <div class="toggle-group">
+            <label>Auto-Save Results</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autoSaveToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="input-group">
+            <label>Data Management</label>
+            <div style="display: flex; gap: 8px; flex-direction: column;">
+              <button class="btn-outline" onclick="downloadLogs()" style="width: 100%;">
+                <i class="fas fa-file-download"></i> Download Logs (JSON)
+              </button>
+              <button class="btn-outline" style="color: var(--error); border-color: var(--error); width: 100%;" onclick="clearAllData()">
+                <i class="fas fa-trash"></i> Clear All Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. API & BACKEND -->
+        <div class="settings-section">
+          <h4><i class="fas fa-server"></i> API & Backend</h4>
+          <div class="input-group">
+            <label>Groq API Key</label>
+            <input type="password" class="glass-input" id="apiKeyInput" placeholder="gsk_..." />
+            <small>Get your free key at console.groq.com</small>
+          </div>
+          <div class="input-group">
+            <label>Backend URL</label>
+            <input type="text" class="glass-input" id="backendUrlInput" placeholder="http://localhost:8000" />
+          </div>
+          <div class="input-group">
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-outline" onclick="testApiConnection()" style="flex: 1;">
+                <i class="fas fa-plug"></i> Test Connection
+              </button>
+              <button class="btn-outline" onclick="resetApiConfig()" style="flex: 1;">
+                <i class="fas fa-redo"></i> Reset
+              </button>
+            </div>
+            <div id="connectionStatus" style="margin-top: 8px; font-size: 0.85rem; display: none;"></div>
+          </div>
+        </div>
+
+        <!-- 6. SYSTEM -->
+        <div class="settings-section">
+          <h4><i class="fas fa-cogs"></i> System Preferences</h4>
+          <div class="toggle-group">
+            <label>Notifications</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="notifyToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-group">
+            <label>Sound Effects</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="soundToggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="input-group">
+            <label>Performance Mode</label>
+            <select class="glass-input" id="performanceMode">
+              <option value="low">Low (Reduced Effects)</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="high">High (Full Quality)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <button class="btn-outline" style="color: var(--error); border-color: var(--error); width: 100%;" onclick="factoryReset()">
+              <i class="fas fa-sync-alt"></i> Factory Reset (All Settings)
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeSettings()">Cancel</button>
+        <button class="btn-gradient" onclick="saveSettings()">
+          <i class="fas fa-save"></i>
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="loading-content">
+      <div class="loading-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+      </div>
+      <h3>Processing with AI</h3>
+      <p id="loadingStep">Initializing...</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="glass-app.js"></script>
+</body>
+</html>
