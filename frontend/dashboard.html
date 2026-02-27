@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@300;400;500;600;700;800;900&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link id="mainStylesheet" rel="stylesheet" href="glass-style.css">
 </head>
@@ -98,13 +99,21 @@
           <i class="fas fa-robot"></i>
           Hybrid AI/ML
         </div>
-        <button class="btn-icon" onclick="openSettings()">
-          <i class="fas fa-cog"></i>
-        </button>
-        <div class="user-avatar" id="userAvatarContainer" style="cursor: pointer;" title="Click to upload profile picture">
-          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="User" />
+        <div id="profileMenuWrap" style="position: relative;">
+          <div class="user-avatar" id="userAvatarContainer" style="cursor: pointer;" title="Open profile menu">
+            <img id="userAvatarImg" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="User" />
+          </div>
+          <div class="glass-card hidden" id="profileDropdown" style="position: absolute; top: 48px; right: 0; min-width: 248px; padding: 12px; z-index: 1500;">
+            <div style="padding: 8px 10px 10px; border-bottom: 1px solid var(--glass-border); margin-bottom: 8px;">
+              <div id="profileNameLabel" style="font-weight: 700; color: var(--text-primary);">Profile</div>
+              <div id="profileEmailLabel" style="font-size: 0.8rem; color: var(--text-muted);">user@domain.com</div>
+            </div>
+            <button class="btn-icon" id="manageSettingsBtn" style="width: 100%; height: auto; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 10px;">
+              <i class="fas fa-cog"></i>
+              <span>Manage / Settings</span>
+            </button>
+          </div>
         </div>
-        <input type="file" id="avatarUpload" accept="image/*" hidden />
       </div>
     </header>
 
@@ -678,7 +687,7 @@
             <div style="display: flex; gap: 8px;">
               <input type="file" id="avatarUpload" accept="image/*" hidden />
               <button class="btn-outline" onclick="document.getElementById('avatarUpload').click()" style="flex: 1;">
-                <i class="fas fa-upload"></i> Upload
+                <i class="fas fa-upload"></i> Change Photo
               </button>
               <button class="btn-outline" onclick="resetAvatar()" style="flex: 1;">
                 <i class="fas fa-redo"></i> Reset
@@ -812,7 +821,7 @@
           </div>
           <div class="input-group">
             <label>Backend URL</label>
-            <input type="text" class="glass-input" id="backendUrlInput" placeholder="http://localhost:8000" />
+            <input type="text" class="glass-input" id="backendUrlInput" placeholder="https://your-render-service.onrender.com" />
           </div>
           <div class="input-group">
             <div style="display: flex; gap: 8px;">
@@ -885,6 +894,7 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script src="glass-app.js"></script>
 </body>
 </html>

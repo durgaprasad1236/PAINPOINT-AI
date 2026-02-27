@@ -976,6 +976,19 @@ html.light-mode .cube-face {
   height: 280px;
 }
 
+.chart-container canvas {
+  background: rgba(20, 25, 45, 0.2);
+  border-radius: 12px;
+}
+
+html.light-mode .chart-container canvas {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html.light-mode .charts-row .glass-card {
+  background: rgba(255, 255, 255, 0.82);
+}
+
 /* ── Input Elements ─────────────────────────────────────────── */
 .glass-input,
 .glass-textarea,
@@ -1083,6 +1096,9 @@ html.light-mode select,
 html.light-mode .glass-input[type="select"],
 html.light-mode .filter-glass {
   color-scheme: light;
+  background-color: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: #1a3a52;
   background-image: 
     linear-gradient(45deg, transparent 49%, #1a3a52 51%),
     linear-gradient(135deg, #1a3a52 49%, transparent 51%);
@@ -1102,19 +1118,25 @@ html.light-mode select option {
 }
 
 html.light-mode select option:hover {
-  background: linear-gradient(135deg, #00d9ff, #7c3aed);
-  color: white;
+  background: rgba(0, 217, 255, 0.12);
+  color: #1a3a52;
 }
 
 html.light-mode select option:checked {
-  background: linear-gradient(135deg, #00d9ff, #7c3aed);
-  color: white;
+  background: rgba(0, 217, 255, 0.16);
+  color: #1a3a52;
 }
 
 html.light-mode select:focus {
   background-color: rgba(255, 255, 255, 0.95) !important;
   box-shadow: 0 0 0 4px rgba(0, 217, 255, 0.15) !important;
   border-color: #00d9ff !important;
+}
+
+html.light-mode .search-glass,
+html.light-mode .filter-glass {
+  height: 42px;
+  line-height: 1.2;
 }
 
 /* ── Tabs ───────────────────────────────────────────────────── */
@@ -1544,6 +1566,7 @@ html.light-mode select:focus {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .header-actions .search-glass {
@@ -1552,7 +1575,31 @@ html.light-mode select:focus {
 }
 
 .header-actions .filter-glass {
+  flex: 0 0 150px;
   min-width: 150px;
+  position: relative;
+  z-index: 2;
+}
+
+html.light-mode .header-actions {
+  gap: 12px;
+}
+
+html.light-mode .header-actions .search-glass,
+html.light-mode .header-actions .filter-glass {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: #1a3a52;
+}
+
+html.light-mode .header-actions .search-glass::placeholder {
+  color: rgba(26, 58, 82, 0.55);
+}
+
+html.light-mode .header-actions .filter-glass:hover,
+html.light-mode .header-actions .search-glass:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 217, 255, 0.35);
 }
 
 .table-scroll {

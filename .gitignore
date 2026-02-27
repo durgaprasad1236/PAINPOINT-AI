@@ -1,0 +1,23 @@
+# Environment variables
+.env
+**/.env
+
+# Virtual environments
+env/
+venv/
+backend/venv/
+
+# Python cache and artifacts
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Test/cache directories
+.pytest_cache/
+.mypy_cache/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

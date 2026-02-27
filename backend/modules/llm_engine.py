@@ -33,25 +33,34 @@ load_dotenv()
 # ═══════════════════════════════════════════════════════════════
 
 _client: OpenAI | None = None
+_model_name: str = "gpt-4o-mini"
 
 
 def _get_client() -> OpenAI:
     """
     Initialize and return OpenAI client.
-    Reads OPENAI_API_KEY from environment variables.
+    Reads API_KEY from environment variables.
     """
-    global _client
+    global _client, _model_name
     if _client is None:
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        if not api_key or api_key == "your_openai_api_key_here":
+        api_key = os.getenv("API_KEY", "")
+        if not api_key or api_key == "your_api_key_here":
             raise EnvironmentError(
-                "\n❌ OPENAI_API_KEY not found!\n\n"
+                "\n❌ API_KEY not found!\n\n"
                 "Please:\n"
                 "1. Get your key at: https://platform.openai.com/api-keys\n"
                 "2. Open backend/.env file\n"
-                "3. Replace 'your_openai_api_key_here' with your actual key\n"
+                "3. Replace 'your_api_key_here' with your actual key\n"
             )
-        _client = OpenAI(api_key=api_key)
+        if api_key.startswith("gsk_"):
+            _client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.groq.com/openai/v1"
+            )
+            _model_name = "llama-3.3-70b-versatile"
+        else:
+            _client = OpenAI(api_key=api_key)
+            _model_name = "gpt-4o-mini"
     return _client
 
 
@@ -120,7 +129,7 @@ def llm_analyse(feedback_text: str, ml_hint: str = "") -> Dict[str, any]:
         # Call OpenAI API
         client = _get_client()
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # OpenAI's cost-effective model
+            model=_model_name,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,  # Low = consistent structured output
             max_tokens=512,
@@ -174,8 +183,8 @@ def llm_analyse(feedback_text: str, ml_hint: str = "") -> Dict[str, any]:
         return _empty_result(
             "LLM returned invalid JSON - retrying might help"
         )
-    except Exception as e:
-        return _empty_result(f"LLM call failed: {str(e)}")
+    except Exception:
+        return _empty_result("LLM call failed: Invalid or missing API_KEY")
 
 
 # ═══════════════════════════════════════════════════════════════

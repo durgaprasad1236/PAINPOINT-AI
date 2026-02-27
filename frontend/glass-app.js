@@ -4,12 +4,86 @@
 ═══════════════════════════════════════════════════════════════ */
 
 // ── Configuration ─────────────────────────────────────────────
-const API_BASE = localStorage.getItem('backendUrlInput') || 'http://localhost:8000';
+const DEFAULT_API_BASE = normalizeApiBase(
+  window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000'
+);
+let API_BASE = resolveApiBaseUrl();
 let currentView = 'overview';
 let currentTab = 'csv';
 let analysisData = null;
 let allResults = [];
 let charts = {};
+
+function normalizeApiBase(url) {
+  return (url || '').trim().replace(/\/$/, '');
+}
+
+function resolveApiBaseUrl() {
+  const savedBaseUrl = normalizeApiBase(localStorage.getItem('backendUrlInput') || '');
+  const baseUrl = savedBaseUrl || DEFAULT_API_BASE;
+
+  if (window.location.protocol === 'https:' && baseUrl.startsWith('http://')) {
+    return baseUrl.replace(/^http:\/\//i, 'https://');
+  }
+
+  return baseUrl;
+}
+
+async function apiFetch(path, options = {}, maxRetries = 1, timeoutMs = 45000) {
+  API_BASE = resolveApiBaseUrl();
+  const endpoint = path.startsWith('/') ? path : `/${path}`;
+  const url = `${API_BASE}${endpoint}`;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let detail = '';
+
+        try {
+          const payload = await response.clone().json();
+          detail = payload.detail || payload.message || '';
+        } catch {
+          detail = await response.clone().text();
+        }
+
+        if ([502, 503, 504].includes(response.status) && attempt < maxRetries) {
+          await delay(2000 * (attempt + 1));
+          continue;
+        }
+
+        throw new Error(detail || `Request failed (${response.status})`);
+      }
+
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      const isTimeout = error?.name === 'AbortError';
+      const isNetworkError = error instanceof TypeError || isTimeout;
+
+      if (isNetworkError && attempt < maxRetries) {
+        await delay(2000 * (attempt + 1));
+        continue;
+      }
+
+      if (isTimeout) {
+        throw new Error('Request timed out. The backend may be waking up (Render cold start). Please retry in a few seconds.');
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error('Unable to reach the backend API.');
+}
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,11 +113,18 @@ function logout() {
 
 // ── Event Listeners ───────────────────────────────────────────
 function setupEventListeners() {
+  disableSidebarSettingsAccess();
+
   // Navigation
   document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const view = link.dataset.view;
+
+      if (view === 'settings') {
+        return;
+      }
+
       switchView(view);
     });
   });
@@ -95,12 +176,39 @@ function setupEventListeners() {
 
   // Avatar upload
   const userAvatarContainer = document.getElementById('userAvatarContainer');
+  const profileMenuWrap = document.getElementById('profileMenuWrap');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const manageSettingsBtn = document.getElementById('manageSettingsBtn');
   const avatarUpload = document.getElementById('avatarUpload');
   
-  if (userAvatarContainer && avatarUpload) {
-    userAvatarContainer.addEventListener('click', () => avatarUpload.click());
-    avatarUpload.addEventListener('change', handleAvatarUpload);
+  if (userAvatarContainer && profileDropdown) {
+    userAvatarContainer.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleProfileDropdown();
+    });
   }
+
+  if (manageSettingsBtn) {
+    manageSettingsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeProfileDropdown();
+      openSettings();
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (profileMenuWrap && !profileMenuWrap.contains(event.target)) {
+      closeProfileDropdown();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeProfileDropdown();
+    }
+  });
 
   // Theme buttons
   document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -170,6 +278,22 @@ function setupEventListeners() {
   if (sidebarToggle) {
     sidebarToggle.addEventListener('click', toggleSidebar);
   }
+}
+
+function disableSidebarSettingsAccess() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+
+  sidebar.addEventListener('click', (event) => {
+    const blockedTrigger = event.target.closest(
+      '#sidebarSettingsBtn, #settingsBtn, .sidebar-settings-btn, .nav-link[data-view="settings"], [data-action="open-settings"], [onclick*="openSettings"]'
+    );
+
+    if (!blockedTrigger) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+  });
 }
 
 // ── Sidebar Toggle ────────────────────────────────────────────
@@ -284,7 +408,7 @@ async function checkApiHealth() {
   const indicator = statusEl.querySelector('.status-indicator');
   
   try {
-    const res = await fetch(`${API_BASE}/api/health`);
+    const res = await apiFetch('/api/health', {}, 2, 20000);
     const data = await res.json();
     
     if (data.api_key_configured) {
@@ -341,13 +465,11 @@ async function analyzeSingle() {
   
   updateLoadingStep('Analyzing with AI...', 50);
   
-  const res = await fetch(`${API_BASE}/api/analyse-single`, {
+  const res = await apiFetch('/api/analyse-single', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ feedback })
-  });
-  
-  if (!res.ok) throw new Error('Analysis failed');
+  }, 2);
   
   const data = await res.json();
   displaySingleResult(data);
@@ -375,12 +497,10 @@ async function analyzeBatch() {
   await delay(500);
   updateLoadingStep('Calling LLM...', 60);
   
-  const res = await fetch(`${API_BASE}/api/analyse`, {
+  const res = await apiFetch('/api/analyse', {
     method: 'POST',
     body: formData
-  });
-  
-  if (!res.ok) throw new Error('Analysis failed');
+  }, 2);
   
   updateLoadingStep('Generating insights...', 80);
   const data = await res.json();
@@ -452,14 +572,78 @@ function displaySingleResult(data) {
   switchView('intelligence');
 }
 
+function isLightThemeActive() {
+  return document.documentElement.classList.contains('light-mode');
+}
+
+function getThemeValue(variableName, fallback = '') {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(variableName).trim();
+  return value || fallback;
+}
+
+function getChartThemeColors() {
+  const isLight = isLightThemeActive();
+  const textPrimary = getThemeValue('--text-primary', '#ffffff');
+  const textSecondary = getThemeValue('--text-secondary', 'rgba(255, 255, 255, 0.7)');
+  const borderColor = getThemeValue('--glass-border', 'rgba(255, 255, 255, 0.1)');
+  const chartBackground = isLight
+    ? 'rgba(255, 255, 255, 0.88)'
+    : 'rgba(20, 25, 45, 0.35)';
+
+  return {
+    isLight,
+    textPrimary,
+    textSecondary,
+    gridColor: borderColor,
+    chartBackground,
+    tooltipBg: isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(0, 0, 0, 0.85)',
+    tooltipTitle: isLight ? textPrimary : '#ffffff',
+    tooltipBody: isLight ? textSecondary : '#dddddd',
+    tooltipBorder: borderColor
+  };
+}
+
+function rgba(rgb, opacity) {
+  return `rgba(${rgb}, ${opacity})`;
+}
+
+const chartThemeBackgroundPlugin = {
+  id: 'chartThemeBackground',
+  beforeDraw(chart, _args, pluginOptions) {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+
+    ctx.save();
+    ctx.fillStyle = pluginOptions?.backgroundColor || 'transparent';
+    ctx.fillRect(
+      chartArea.left,
+      chartArea.top,
+      chartArea.right - chartArea.left,
+      chartArea.bottom - chartArea.top
+    );
+    ctx.restore();
+  }
+};
+
+function refreshChartsForTheme() {
+  if (!analysisData) return;
+
+  renderPriorityChart(analysisData.priority_scores || []);
+  renderSeverityChart(analysisData.severity_distribution || []);
+  renderEmotionChart(analysisData.emotion_distribution || []);
+}
+
 // ── Charts ────────────────────────────────────────────────────
 function renderPriorityChart(data) {
   const ctx = document.getElementById('priorityChart')?.getContext('2d');
   if (!ctx) return;
+  const theme = getChartThemeColors();
+  const barOpacity = theme.isLight ? 0.92 : 0.8;
   
   if (charts.priority) charts.priority.destroy();
   
   charts.priority = new Chart(ctx, {
+    plugins: [chartThemeBackgroundPlugin],
     type: 'bar',
     data: {
       labels: data.map(d => d.category),
@@ -467,10 +651,10 @@ function renderPriorityChart(data) {
         label: 'Priority Score',
         data: data.map(d => d.priority_score),
         backgroundColor: data.map(d => {
-          if (d.severity_label === 'Critical') return 'rgba(239, 68, 68, 0.8)';
-          if (d.severity_label === 'High') return 'rgba(245, 158, 11, 0.8)';
-          if (d.severity_label === 'Medium') return 'rgba(59, 130, 246, 0.8)';
-          return 'rgba(16, 185, 129, 0.8)';
+          if (d.severity_label === 'Critical') return rgba('239, 68, 68', barOpacity);
+          if (d.severity_label === 'High') return rgba('245, 158, 11', barOpacity);
+          if (d.severity_label === 'Medium') return rgba('59, 130, 246', barOpacity);
+          return rgba('16, 185, 129', barOpacity);
         }),
         borderRadius: 0,
         borderSkipped: false,
@@ -482,24 +666,27 @@ function renderPriorityChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        chartThemeBackground: {
+          backgroundColor: theme.chartBackground
+        },
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          titleColor: '#fff',
-          bodyColor: '#ddd',
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.tooltipTitle,
+          bodyColor: theme.tooltipBody,
           padding: 12,
-          borderColor: 'rgba(0, 217, 255, 0.3)',
+          borderColor: theme.tooltipBorder,
           borderWidth: 1
         }
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: 'rgba(255, 255, 255, 0.6)' }
+          grid: { color: theme.gridColor },
+          ticks: { color: theme.textSecondary }
         },
         y: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: 'rgba(255, 255, 255, 0.6)' }
+          grid: { color: theme.gridColor },
+          ticks: { color: theme.textSecondary }
         }
       }
     }
@@ -509,19 +696,22 @@ function renderPriorityChart(data) {
 function renderSeverityChart(data) {
   const ctx = document.getElementById('severityChart')?.getContext('2d');
   if (!ctx) return;
+  const theme = getChartThemeColors();
+  const sliceOpacity = theme.isLight ? 0.92 : 0.8;
   
   if (charts.severity) charts.severity.destroy();
   
   charts.severity = new Chart(ctx, {
+    plugins: [chartThemeBackgroundPlugin],
     type: 'doughnut',
     data: {
       labels: data.map(d => d.severity),
       datasets: [{
         data: data.map(d => d.count),
         backgroundColor: [
-          'rgba(239, 68, 68, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(16, 185, 129, 0.8)'
+          rgba('239, 68, 68', sliceOpacity),
+          rgba('245, 158, 11', sliceOpacity),
+          rgba('16, 185, 129', sliceOpacity)
         ],
         borderWidth: 0,
         hoverOffset: 8
@@ -532,18 +722,23 @@ function renderSeverityChart(data) {
       maintainAspectRatio: false,
       cutout: '70%',
       plugins: {
+        chartThemeBackground: {
+          backgroundColor: theme.chartBackground
+        },
         legend: {
           position: 'bottom',
           labels: {
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: theme.textPrimary,
             padding: 16,
             font: { size: 12 }
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          titleColor: '#fff',
-          bodyColor: '#ddd',
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.tooltipTitle,
+          bodyColor: theme.tooltipBody,
+          borderColor: theme.tooltipBorder,
+          borderWidth: 1,
           padding: 10
         }
       }
@@ -554,26 +749,29 @@ function renderSeverityChart(data) {
 function renderEmotionChart(data) {
   const ctx = document.getElementById('emotionChart')?.getContext('2d');
   if (!ctx) return;
+  const theme = getChartThemeColors();
+  const barOpacity = theme.isLight ? 0.92 : 0.8;
   
   if (charts.emotion) charts.emotion.destroy();
   
   const colors = {
-    'Frustration': 'rgba(239, 68, 68, 0.8)',
-    'Anger': 'rgba(220, 38, 38, 0.8)',
-    'Disappointment': 'rgba(245, 158, 11, 0.8)',
-    'Neutral': 'rgba(107, 114, 128, 0.8)',
-    'Satisfaction': 'rgba(16, 185, 129, 0.8)',
-    'Confusion': 'rgba(139, 92, 246, 0.8)'
+    'Frustration': rgba('239, 68, 68', barOpacity),
+    'Anger': rgba('220, 38, 38', barOpacity),
+    'Disappointment': rgba('245, 158, 11', barOpacity),
+    'Neutral': rgba('107, 114, 128', barOpacity),
+    'Satisfaction': rgba('16, 185, 129', barOpacity),
+    'Confusion': rgba('139, 92, 246', barOpacity)
   };
   
   charts.emotion = new Chart(ctx, {
+    plugins: [chartThemeBackgroundPlugin],
     type: 'bar',
     data: {
       labels: data.map(d => d.emotion),
       datasets: [{
         label: 'Count',
         data: data.map(d => d.count),
-        backgroundColor: data.map(d => colors[d.emotion] || 'rgba(107, 114, 128, 0.8)'),
+        backgroundColor: data.map(d => colors[d.emotion] || rgba('107, 114, 128', barOpacity)),
         borderRadius: 0,
         borderSkipped: false,
         barPercentage: 0.8,
@@ -585,20 +783,27 @@ function renderEmotionChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        chartThemeBackground: {
+          backgroundColor: theme.chartBackground
+        },
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          backgroundColor: theme.tooltipBg,
+          titleColor: theme.tooltipTitle,
+          bodyColor: theme.tooltipBody,
+          borderColor: theme.tooltipBorder,
+          borderWidth: 1,
           padding: 10
         }
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { color: 'rgba(255, 255, 255, 0.6)' }
+          grid: { color: theme.gridColor },
+          ticks: { color: theme.textSecondary }
         },
         y: {
           grid: { display: false },
-          ticks: { color: 'rgba(255, 255, 255, 0.6)' }
+          ticks: { color: theme.textSecondary }
         }
       }
     }
@@ -745,13 +950,246 @@ function renderIntelligence(data) {
 }
 
 // ── Export Functions ──────────────────────────────────────────
-function exportToPDF() {
+async function exportToPDF() {
   if (!analysisData) {
-    alert('No analysis data available. Run analysis first.');
+    showNotification('No analysis data available. Run analysis first.', 'error');
     return;
   }
-  
-  alert('PDF export: Generating report with charts and insights...\n\n(Feature requires jsPDF library - implementation complete in production)');
+
+  const jsPDFCtor = window.jspdf?.jsPDF;
+  if (!jsPDFCtor || !window.html2canvas) {
+    showNotification('PDF export is unavailable. Missing jsPDF/html2canvas.', 'error');
+    return;
+  }
+
+  try {
+    showLoading();
+    updateLoadingStep('Preparing PDF export...', 8);
+    await yieldToMainThread();
+
+    const chartImages = await captureChartsForPdf();
+    updateLoadingStep('Building PDF layout...', 45);
+    await yieldToMainThread();
+
+    const pdf = new jsPDFCtor('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 12;
+    const usableWidth = pageWidth - margin * 2;
+
+    let cursorY = margin;
+    const lineHeight = 5.2;
+
+    const ensureSpace = (requiredHeight) => {
+      if (cursorY + requiredHeight > pageHeight - margin) {
+        pdf.addPage();
+        cursorY = margin;
+      }
+    };
+
+    const drawSectionTitle = (title) => {
+      ensureSpace(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.text(title, margin, cursorY);
+      cursorY += 6;
+    };
+
+    const drawWrappedText = (text, fontSize = 10, color = [55, 65, 81]) => {
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(...color);
+
+      const lines = pdf.splitTextToSize(String(text || ''), usableWidth);
+      for (const line of lines) {
+        ensureSpace(lineHeight);
+        pdf.text(line, margin, cursorY);
+        cursorY += lineHeight;
+      }
+    };
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text('PainPoint AI Report', margin, cursorY);
+    cursorY += 7;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, cursorY);
+    cursorY += 8;
+
+    drawSectionTitle('Summary');
+    const summary = analysisData.summary_stats || {};
+    drawWrappedText(`Total Feedback: ${summary.total_feedback ?? 0}`);
+    drawWrappedText(`High Severity: ${summary.high_severity_count ?? 0}`);
+    drawWrappedText(`Top Category: ${summary.top_category || 'N/A'}`);
+    drawWrappedText(`Top Emotion: ${summary.top_emotion || 'N/A'}`);
+    cursorY += 2;
+
+    drawSectionTitle('Executive Insights');
+    drawWrappedText(analysisData.executive_summary || 'No executive summary available.');
+    cursorY += 2;
+
+    drawSectionTitle('Charts');
+    const chartWidth = (usableWidth - 6) / 2;
+    const chartHeight = 52;
+    const drawChartAt = (img, x, y, w, h) => {
+      if (!img) return;
+      pdf.setDrawColor(226, 232, 240);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(x, y, w, h, 2, 2, 'FD');
+      pdf.addImage(img, 'JPEG', x + 1.5, y + 1.5, w - 3, h - 3, undefined, 'FAST');
+    };
+
+    ensureSpace(chartHeight * 2 + 10);
+    const chartsY = cursorY;
+    drawChartAt(chartImages[0], margin, chartsY, chartWidth, chartHeight);
+    drawChartAt(chartImages[1], margin + chartWidth + 6, chartsY, chartWidth, chartHeight);
+    drawChartAt(chartImages[2], margin, chartsY + chartHeight + 6, usableWidth, chartHeight);
+    cursorY += chartHeight * 2 + 10;
+
+    updateLoadingStep('Formatting table data...', 72);
+    await yieldToMainThread();
+
+    drawSectionTitle('Detailed Results');
+    const columns = [
+      { key: 'index', label: '#', width: 8 },
+      { key: 'feedback', label: 'Feedback', width: 50 },
+      { key: 'category', label: 'Category', width: 32 },
+      { key: 'severity', label: 'Sev', width: 12 },
+      { key: 'emotion', label: 'Emotion', width: 18 },
+      { key: 'root', label: 'Root Cause', width: 42 },
+      { key: 'solution', label: 'Solution', width: 42 }
+    ];
+
+    const drawTableHeader = () => {
+      ensureSpace(8);
+      pdf.setFillColor(243, 244, 246);
+      pdf.setDrawColor(209, 213, 219);
+      let x = margin;
+      columns.forEach((col) => {
+        pdf.rect(x, cursorY, col.width, 8, 'FD');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(31, 41, 55);
+        pdf.text(col.label, x + 1.5, cursorY + 5.3);
+        x += col.width;
+      });
+      cursorY += 8;
+    };
+
+    const rows = (allResults || []).map((item, idx) => ({
+      index: String(idx + 1),
+      feedback: item.original_feedback || '',
+      category: item.ml_suggested_category || item.category || '',
+      severity: item.severity || '',
+      emotion: item.emotion || '',
+      root: item.root_cause || '',
+      solution: item.solution || ''
+    }));
+
+    if (!rows.length) {
+      drawWrappedText('No data available.');
+    } else {
+      drawTableHeader();
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(31, 41, 55);
+
+      for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        if (rowIndex % 10 === 0) {
+          updateLoadingStep(`Rendering table rows (${Math.min(rowIndex, rows.length)}/${rows.length})...`, 72 + Math.round((rowIndex / rows.length) * 20));
+          await yieldToMainThread();
+        }
+
+        const row = rows[rowIndex];
+        const cellLines = columns.map((col) => {
+          const cellText = String(row[col.key] || '');
+          return pdf.splitTextToSize(cellText, col.width - 3);
+        });
+
+        const rowHeight = Math.max(6, ...cellLines.map((lines) => lines.length * 3.6 + 1.6));
+        if (cursorY + rowHeight > pageHeight - margin) {
+          pdf.addPage();
+          cursorY = margin;
+          drawTableHeader();
+        }
+
+        let x = margin;
+        columns.forEach((col, colIdx) => {
+          pdf.setDrawColor(229, 231, 235);
+          pdf.rect(x, cursorY, col.width, rowHeight);
+          const lines = cellLines[colIdx];
+          lines.forEach((line, lineIdx) => {
+            pdf.text(line, x + 1.5, cursorY + 4 + lineIdx * 3.6);
+          });
+          x += col.width;
+        });
+
+        cursorY += rowHeight;
+      }
+    }
+
+    updateLoadingStep('Finalizing download...', 96);
+    await yieldToMainThread();
+
+    const blob = pdf.output('blob');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `painpoint-report-${stamp}.pdf`;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    updateLoadingStep('Complete!', 100);
+    await delay(120);
+    showNotification('PDF downloaded successfully', 'success');
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    showNotification('Failed to export PDF. Please try again.', 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function captureChartsForPdf() {
+  const chartTargets = ['priorityChart', 'severityChart', 'emotionChart'];
+  const images = [];
+
+  await yieldToMainThread();
+  await delay(60);
+
+  for (let index = 0; index < chartTargets.length; index += 1) {
+    updateLoadingStep(`Capturing charts (${index + 1}/${chartTargets.length})...`, 18 + index * 9);
+    const canvas = document.getElementById(chartTargets[index]);
+    if (!canvas) {
+      images.push(null);
+      continue;
+    }
+
+    const captureCanvas = await window.html2canvas(canvas, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    images.push(captureCanvas.toDataURL('image/jpeg', 0.82));
+    await yieldToMainThread();
+  }
+
+  return images;
+}
+
+function yieldToMainThread() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      setTimeout(resolve, 0);
+    });
+  });
 }
 
 function exportToCSV() {
@@ -875,15 +1313,52 @@ function applyTheme(theme) {
     });
     themeBtn.classList.add('active');
   }
+
+  requestAnimationFrame(() => {
+    refreshChartsForTheme();
+  });
 }
 
 // ── Settings ──────────────────────────────────────────────────
+function updateProfileDropdown() {
+  const profileNameLabel = document.getElementById('profileNameLabel');
+  const profileEmailLabel = document.getElementById('profileEmailLabel');
+
+  if (!profileNameLabel || !profileEmailLabel) return;
+
+  const displayName = localStorage.getItem('displayName') || 'Admin User';
+  const userEmail = localStorage.getItem('userEmail') || 'admin@painpoint.ai';
+
+  profileNameLabel.textContent = displayName;
+  profileEmailLabel.textContent = userEmail;
+}
+
+function toggleProfileDropdown() {
+  const profileDropdown = document.getElementById('profileDropdown');
+  if (!profileDropdown) return;
+
+  const willOpen = profileDropdown.classList.contains('hidden');
+  if (willOpen) {
+    updateProfileDropdown();
+    profileDropdown.classList.remove('hidden');
+  } else {
+    profileDropdown.classList.add('hidden');
+  }
+}
+
+function closeProfileDropdown() {
+  const profileDropdown = document.getElementById('profileDropdown');
+  if (!profileDropdown) return;
+  profileDropdown.classList.add('hidden');
+}
+
 function openSettings() {
+  closeProfileDropdown();
   document.getElementById('settingsModal').classList.remove('hidden');
   
   // Load all current values
   const apiKey = localStorage.getItem('groqApiKey') || '';
-  const backendUrl = localStorage.getItem('backendUrlInput') || 'http://localhost:8000';
+  const backendUrl = localStorage.getItem('backendUrlInput') || DEFAULT_API_BASE;
   const themeMode = localStorage.getItem('themeMode') || 'auto';
   const displayName = localStorage.getItem('displayName') || '';
   const userEmail = localStorage.getItem('userEmail') || '';
@@ -935,6 +1410,7 @@ function saveSettings() {
   
   if (apiKey) localStorage.setItem('groqApiKey', apiKey);
   if (backendUrl) localStorage.setItem('backendUrlInput', backendUrl);
+  API_BASE = resolveApiBaseUrl();
 
   // Save appearance settings
   const accentColor = document.getElementById('accentColorPicker').value;
@@ -968,12 +1444,7 @@ function saveSettings() {
 }
 
 function loadSettings() {
-  const apiKey = localStorage.getItem('groqApiKey');
-  const backendUrl = localStorage.getItem('backendUrlInput');
-  
-  if (backendUrl) {
-    API_BASE = backendUrl;
-  }
+  API_BASE = resolveApiBaseUrl();
 
   // Load theme
   const savedTheme = localStorage.getItem('themeMode') || 'auto';
@@ -1105,10 +1576,9 @@ function resetAvatar() {
 // ── API Connection Test ─────────────────────────────────────────
 async function testApiConnection() {
   const backendUrl = document.getElementById('backendUrlInput').value.trim();
-  const apiKey = document.getElementById('apiKeyInput').value.trim();
-  
-  if (!backendUrl || !apiKey) {
-    showNotification('Please enter both Backend URL and API Key', 'error');
+
+  if (!backendUrl) {
+    showNotification('Please enter a Backend URL', 'error');
     return;
   }
 
@@ -1118,11 +1588,7 @@ async function testApiConnection() {
   statusDiv.style.color = 'var(--text-muted)';
 
   try {
-    const response = await fetch(`${backendUrl}/api/health`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`
-      }
-    });
+    const response = await fetch(`${normalizeApiBase(backendUrl)}/api/health`);
 
     if (response.ok) {
       const data = await response.json();
@@ -1147,7 +1613,8 @@ function resetApiConfig() {
     localStorage.removeItem('groqApiKey');
     localStorage.removeItem('backendUrlInput');
     document.getElementById('apiKeyInput').value = '';
-    document.getElementById('backendUrlInput').value = 'http://localhost:8000';
+    document.getElementById('backendUrlInput').value = DEFAULT_API_BASE;
+    API_BASE = resolveApiBaseUrl();
     document.getElementById('connectionStatus').style.display = 'none';
     showNotification('API config reset', 'success');
   }

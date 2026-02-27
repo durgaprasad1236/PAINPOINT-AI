@@ -444,6 +444,7 @@
 
   </div>
 
+  <script src="config.js"></script>
   <script>
     // Generate floating particles
     const particlesEl = document.getElementById('particles');
@@ -463,8 +464,24 @@
     const btnLoading = document.getElementById('btnLoading');
     const errorBox = document.getElementById('errorBox');
 
+    function normalizeApiBase(url) {
+      return (url || '').trim().replace(/\/$/, '');
+    }
+
+    function resolveApiUrl() {
+      const saved = normalizeApiBase(localStorage.getItem('backendUrlInput') || '');
+      const configured = normalizeApiBase(window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000');
+      const selected = saved || configured;
+
+      if (window.location.protocol === 'https:' && selected.startsWith('http://')) {
+        return selected.replace(/^http:\/\//i, 'https://');
+      }
+
+      return selected;
+    }
+
     // API base URL
-    const API_URL = 'http://localhost:8000';
+    const API_URL = resolveApiUrl();
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -502,8 +519,8 @@
         } else {
           // Error
           errorBox.classList.add('show');
-          document.getElementById('errorMsg').textContent = 
-            data.message || 'Invalid credentials. Try: admin@painpoint.ai / admin123';
+          document.getElementById('errorMsg').textContent =
+            data.detail || data.message || 'Invalid credentials. Try: admin@painpoint.ai / admin123';
           loginBtn.disabled = false;
           btnText.classList.remove('hidden');
           btnLoading.classList.add('hidden');
@@ -557,7 +574,7 @@
         errorBox.classList.remove('show');
 
         // Send token to backend for verification
-        fetch('/api/verify-google-token', {
+        fetch(API_URL + '/api/verify-google-token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

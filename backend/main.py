@@ -18,7 +18,6 @@ Input → Preprocessing → ML Layer → LLM Engine → Insight Engine → Respo
 
 import io
 import os
-import traceback
 from typing import Optional
 
 import pandas as pd
@@ -43,7 +42,12 @@ from modules.insight_engine import (
 )
 
 # Load environment variables
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+
+def _parse_allowed_origins(raw_origins: str) -> list[str]:
+    return [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
 
 # ═══════════════════════════════════════════════════════════════
 #  FASTAPI APP INITIALIZATION
@@ -73,9 +77,23 @@ app = FastAPI(
 #  CORS MIDDLEWARE (Allow Frontend to Connect)
 # ═══════════════════════════════════════════════════════════════
 
+frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+allowed_origins = _parse_allowed_origins(
+    os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,http://localhost:5500,http://127.0.0.1:5500"
+    )
+)
+if frontend_url and frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
+# Optional regex for preview deployments (example: Vercel preview URLs)
+origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"^https://.*\.vercel\.app$")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production: specify your frontend domain
+    allow_origins=allowed_origins,
+    allow_origin_regex=origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -133,19 +151,21 @@ def health_check():
     
     Returns:
     - status: API operational status
-    - api_key_configured: Whether OpenAI API key is set
+    - api_key_configured: Whether API key is set
     - message: Status message
     """
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    key_configured = bool(api_key and api_key != "your_openai_api_key_here")
+    api_key = os.getenv("API_KEY", "")
+    key_configured = bool(api_key and api_key != "your_api_key_here")
     
     return {
         "status": "ok",
+        "environment": os.getenv("ENV", "development"),
         "api_key_configured": key_configured,
+        "allowed_origins": allowed_origins,
         "message": (
-            "✅ OpenAI API key configured. Ready to analyze."
+            "✅ API key configured. Ready to analyze."
             if key_configured
-            else "⚠️  WARNING: OPENAI_API_KEY not set. Please update your .env file."
+            else "⚠️  WARNING: API_KEY not set. Please update your .env file."
         )
     }
 
@@ -382,16 +402,17 @@ async def startup_event():
     print("Status: Starting up...")
     
     # Check API key
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    if api_key and api_key != "your_openai_api_key_here":
-        print("✅ OpenAI API Key: Configured")
+    api_key = os.getenv("API_KEY", "")
+    if api_key and api_key != "your_api_key_here":
+        print("✅ API Key: Configured")
     else:
-        print("⚠️  OpenAI API Key: NOT CONFIGURED")
+        print("⚠️  API Key: NOT CONFIGURED")
         print("   Get your key at: https://platform.openai.com/api-keys")
         print("   Add to backend/.env file")
     
-    print("\n📚 API Documentation: http://localhost:8000/docs")
-    print("🏥 Health Check: http://localhost:8000/api/health")
+    app_base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+    print(f"\n📚 API Documentation: {app_base_url}/docs")
+    print(f"🏥 Health Check: {app_base_url}/api/health")
     print("="*60 + "\n")
 
 
