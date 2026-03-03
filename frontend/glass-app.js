@@ -435,6 +435,12 @@ function setupEventListeners() {
   if (sidebarToggle) {
     sidebarToggle.addEventListener('click', toggleSidebar);
   }
+
+  window.addEventListener('resize', () => {
+    if (!isMobileViewport()) {
+      closeMobileSidebar();
+    }
+  });
 }
 
 function disableSidebarSettingsAccess() {
@@ -453,11 +459,51 @@ function disableSidebarSettingsAccess() {
   });
 }
 
+function isMobileViewport() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+function ensureMobileSidebarOverlay() {
+  let overlay = document.getElementById('mobileSidebarOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'mobileSidebarOverlay';
+    overlay.className = 'mobile-sidebar-overlay';
+    overlay.addEventListener('click', closeMobileSidebar);
+    document.body.appendChild(overlay);
+  }
+  return overlay;
+}
+
+function openMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  ensureMobileSidebarOverlay();
+  sidebar.classList.add('mobile-open');
+  document.body.classList.add('mobile-sidebar-active');
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  sidebar.classList.remove('mobile-open');
+  document.body.classList.remove('mobile-sidebar-active');
+}
+
 // ── Sidebar Toggle ────────────────────────────────────────────
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const mainContainer = document.querySelector('.main-container');
   if (!sidebar || !mainContainer) return;
+
+  if (isMobileViewport()) {
+    if (sidebar.classList.contains('mobile-open')) {
+      closeMobileSidebar();
+    } else {
+      openMobileSidebar();
+    }
+    return;
+  }
   
   const isCollapsed = sidebar.classList.contains('collapsed');
   
@@ -481,6 +527,13 @@ function loadSidebarState() {
   if (!sidebar || !mainContainer) {
     return;
   }
+
+  if (isMobileViewport()) {
+    sidebar.classList.remove('mobile-open', 'collapsed');
+    mainContainer.classList.remove('sidebar-collapsed');
+    closeMobileSidebar();
+    return;
+  }
   
   // Get saved state, default to 'open'
   const sidebarState = localStorage.getItem('sidebarState') || 'open';
@@ -498,6 +551,10 @@ function loadSidebarState() {
 // ── View Switching ────────────────────────────────────────────
 function switchView(viewName) {
   currentView = viewName;
+
+  if (isMobileViewport()) {
+    closeMobileSidebar();
+  }
   
   // Update nav
   document.querySelectorAll('.nav-link').forEach(link => {

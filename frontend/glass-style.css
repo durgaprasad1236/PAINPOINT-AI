@@ -2876,3 +2876,159 @@ body.landing-page {
     max-width: 100% !important;
   }
 }
+
+/* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* Sidebar: hidden by default, slide-in overlay drawer */
+  .glass-sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(82vw, 320px) !important;
+    max-width: 320px !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.26s ease !important;
+    z-index: 2400 !important;
+    overflow-y: auto;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22) !important;
+  }
+
+  .glass-sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 10, 20, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+    z-index: 2300;
+  }
+
+  body.mobile-sidebar-active .mobile-sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* Full-width content */
+  .main-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  .glass-topbar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .content-wrapper,
+  .view-container,
+  .dashboard-content,
+  .glass-card,
+  .glass-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Lighter effects for low-end devices */
+  .glass-card,
+  .glass-modal,
+  .landing-glass,
+  .upload-zone,
+  .search-glass,
+  .filter-glass,
+  .landing-hero-card,
+  .landing-feature-card,
+  .landing-cta,
+  .btn-gradient,
+  .landing-btn-primary {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .logo-icon-3d,
+  .bg-particles,
+  .particles,
+  .landing-bg-glow,
+  .nav-glow {
+    display: none !important;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+  }
+
+  .landing-hero-actions,
+  .topbar-right,
+  .modal-footer,
+  .button-group,
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .landing-btn,
+  .btn-gradient,
+  .btn-outline,
+  .btn-icon {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  .landing-hero-card h1 {
+    font-size: clamp(1.9rem, 9.6vw, 2.6rem);
+    line-height: 1.06;
+  }
+
+  .landing-subtext,
+  .page-subtitle {
+    font-size: clamp(0.92rem, 4vw, 1.02rem);
+    line-height: 1.5;
+  }
+
+  .landing-features h2,
+  .landing-cta h2,
+  .page-title {
+    font-size: clamp(1.4rem, 7.2vw, 2rem);
+    line-height: 1.1;
+  }
+
+  [style*="width: 1200px"],
+  [style*="min-width: 1200px"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
