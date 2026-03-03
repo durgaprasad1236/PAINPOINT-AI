@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PainPoint AI — Turn Pain Into Growth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@500;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="glass-style.css" />
+</head>
+<body class="landing-page">
+  <div class="landing-bg-glow landing-bg-glow-1"></div>
+  <div class="landing-bg-glow landing-bg-glow-2"></div>
+
+  <header class="landing-nav-wrap">
+    <nav class="landing-nav landing-glass">
+      <a href="index.html" class="landing-logo">PainPoint AI</a>
+      <ul class="landing-nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="landing-main">
+    <section class="landing-hero">
+      <div class="landing-hero-card landing-glass">
+        <p class="landing-badge">AI Growth Platform</p>
+        <h1>Turn Business Pain Into Growth with AI</h1>
+        <p class="landing-subtext">
+          PainPoint AI helps businesses identify challenges and transform them into intelligent growth strategies.
+        </p>
+        <div class="landing-hero-actions">
+          <button type="button" class="landing-btn landing-btn-primary" onclick="startFree()">Start Free</button>
+          <a href="#features" class="landing-btn landing-btn-outline">Learn More</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="landing-features">
+      <h2>Built for modern teams</h2>
+      <div class="landing-features-grid">
+        <article class="landing-feature-card landing-glass">
+          <h3>AI Analysis</h3>
+          <p>Automatically discover recurring pain points from customer and internal business feedback.</p>
+        </article>
+        <article class="landing-feature-card landing-glass">
+          <h3>Smart Insights</h3>
+          <p>Get clear recommendations, root-cause intelligence, and confidence-backed strategic direction.</p>
+        </article>
+        <article class="landing-feature-card landing-glass">
+          <h3>Growth Reports</h3>
+          <p>Share polished, decision-ready reports that align teams around the right business actions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="pricing" class="landing-cta-wrap">
+      <div class="landing-cta landing-glass">
+        <h2>Ready to transform your business?</h2>
+        <button type="button" class="landing-btn landing-btn-primary" onclick="startFree()">Get Started</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function startFree() {
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
