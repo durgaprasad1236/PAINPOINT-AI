@@ -12,11 +12,17 @@ services:
         value: production
       - key: API_KEY
         sync: false
+      - key: AUTH_EMAIL
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
       - key: APP_BASE_URL
         sync: false
       - key: FRONTEND_URL
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
       - key: CORS_ORIGIN_REGEX
-        value: ^https://.*\.vercel\.app$
+        sync: false
