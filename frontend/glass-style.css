@@ -3292,6 +3292,150 @@ body.landing-page {
   }
 }
 
+/* ── Responsive Foundation ─────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+:root {
+  --fluid-title: clamp(1.05rem, 0.92rem + 0.55vw, 1.35rem);
+  --fluid-subtitle: clamp(0.82rem, 0.78rem + 0.22vw, 0.95rem);
+  --fluid-body: clamp(0.9rem, 0.86rem + 0.2vw, 1rem);
+}
+
+.page-title {
+  font-size: var(--fluid-title);
+}
+
+.page-subtitle,
+.status-label,
+.status-value,
+.helper-text,
+.summary-text,
+.glass-table td,
+.glass-table th {
+  font-size: var(--fluid-subtitle);
+}
+
+body,
+.glass-input,
+.glass-textarea,
+.btn-gradient,
+.btn-outline,
+.btn-icon,
+.tab-btn {
+  font-size: var(--fluid-body);
+}
+
+/* ── Adaptive Grids (Desktop-safe) ─────────────────────────── */
+.dashboard-grid,
+.cards-grid,
+.analysis-grid,
+.stats-grid,
+.charts-row,
+.intelligence-row,
+.results-detail-container,
+.results-grid,
+.insights-grid,
+.export-grid,
+.table-grid,
+.grid-2,
+.grid-3,
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* ── Filter/Action Wrapping ─────────────────────────────────── */
+.results-header,
+.results-filters,
+.filters-row,
+.search-filter-row,
+.top-actions,
+.search-actions,
+.action-row,
+.button-row,
+.tabs-row,
+.tab-buttons,
+.upload-tabs,
+.upload-controls {
+  flex-wrap: wrap;
+  row-gap: 10px;
+  column-gap: 10px;
+  min-width: 0;
+}
+
+/* ── Table Responsiveness ───────────────────────────────────── */
+.glass-table-wrapper,
+.results-table-wrapper,
+.results-table-wrap,
+.table-wrap,
+.table-container,
+.table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.glass-table,
+.results-table,
+.table-wrap table,
+.table-container table,
+.results-table-wrapper table {
+  min-width: 680px;
+}
+
+/* ── Mobile Controls (Single query) ────────────────────────── */
+@media (max-width: 768px) {
+  .btn-gradient,
+  .btn-outline,
+  .btn-icon,
+  .tab-btn,
+  .landing-btn,
+  .upload-tabs .tab-btn,
+  .results-header .btn-outline,
+  .results-header .btn-gradient {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .results-header,
+  .results-filters,
+  .search-filter-row,
+  .top-actions,
+  .upload-tabs {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .glass-card,
+  .results-card,
+  .results-container,
+  .results-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
