@@ -3083,6 +3083,49 @@ body.landing-page {
   }
 }
 
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .main-container,
+  .content-wrapper,
+  .view-container,
+  .dashboard-content,
+  .view,
+  .tab-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .glass-topbar,
+  .glass-card,
+  .glass-modal,
+  .stats-grid,
+  .charts-row,
+  .intelligence-row,
+  .results-detail-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
