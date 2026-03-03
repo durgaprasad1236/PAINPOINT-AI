@@ -3126,6 +3126,97 @@ body.landing-page {
   }
 }
 
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-grid,
+  .cards-grid,
+  .analysis-grid,
+  .stats-grid,
+  .charts-row,
+  .intelligence-row,
+  .results-detail-container,
+  .results-grid,
+  .insights-grid,
+  .export-grid,
+  .table-grid,
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .upload-tabs,
+  .results-header,
+  .top-actions,
+  .filters-row,
+  .search-filter-row,
+  .search-actions,
+  .action-row,
+  .button-row,
+  .tabs-row,
+  .tab-buttons,
+  .topbar-right,
+  .modal-footer,
+  .upload-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .glass-card,
+  .stat-card,
+  .chart-card,
+  .insight-card,
+  .analysis-panel,
+  .solution-panel,
+  .upload-zone,
+  .search-glass,
+  .filter-glass,
+  .tab-btn,
+  .btn-gradient,
+  .btn-outline,
+  .btn-icon {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .content-wrapper,
+  .view-container,
+  .dashboard-content,
+  .view,
+  .tab-content,
+  .main-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  [style*="grid-template-columns: repeat(2"],
+  [style*="grid-template-columns:repeat(2"],
+  [style*="width: 1200px"],
+  [style*="min-width: 1200px"] {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
