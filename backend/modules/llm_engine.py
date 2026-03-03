@@ -1,7 +1,7 @@
 """
 llm_engine.py
 -------------
-LLM-powered deep analysis using OpenAI API (GPT model).
+LLM-powered deep analysis using Groq API.
 
 This is the INTELLIGENCE CORE of PainPoint AI.
 
@@ -23,44 +23,37 @@ import re
 from typing import Dict
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from groq import Groq
 
 # Load environment variables
 load_dotenv()
 
 # ═══════════════════════════════════════════════════════════════
-#  OPENAI CLIENT INITIALIZATION
+#  GROQ CLIENT INITIALIZATION
 # ═══════════════════════════════════════════════════════════════
 
-_client: OpenAI | None = None
-_model_name: str = "gpt-4o-mini"
+_client: Groq | None = None
+_model_name: str = "llama-3.3-70b-versatile"
 
 
-def _get_client() -> OpenAI:
+def _get_client() -> Groq:
     """
-    Initialize and return OpenAI client.
-    Reads API_KEY from environment variables.
+    Initialize and return Groq client.
+    Reads GROQ_API_KEY from environment variables.
     """
     global _client, _model_name
     if _client is None:
-        api_key = os.getenv("API_KEY", "")
-        if not api_key or api_key == "your_api_key_here":
+        api_key = os.getenv("GROQ_API_KEY", "")
+        if not api_key:
             raise EnvironmentError(
-                "\n❌ API_KEY not found!\n\n"
+                "\n❌ GROQ_API_KEY not found!\n\n"
                 "Please:\n"
-                "1. Get your key at: https://platform.openai.com/api-keys\n"
+                "1. Get your key at: https://console.groq.com/keys\n"
                 "2. Open backend/.env file\n"
-                "3. Replace 'your_api_key_here' with your actual key\n"
+                "3. Set GROQ_API_KEY with your actual key\n"
             )
-        if api_key.startswith("gsk_"):
-            _client = OpenAI(
-                api_key=api_key,
-                base_url="https://api.groq.com/openai/v1"
-            )
-            _model_name = "llama-3.3-70b-versatile"
-        else:
-            _client = OpenAI(api_key=api_key)
-            _model_name = "gpt-4o-mini"
+        _client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        _model_name = "llama-3.3-70b-versatile"
     return _client
 
 
@@ -126,7 +119,7 @@ def llm_analyse(feedback_text: str, ml_hint: str = "") -> Dict[str, any]:
     prompt = _PROMPT_TEMPLATE.format(feedback=feedback_text)
     
     try:
-        # Call OpenAI API
+        # Call Groq API
         client = _get_client()
         response = client.chat.completions.create(
             model=_model_name,
@@ -184,7 +177,7 @@ def llm_analyse(feedback_text: str, ml_hint: str = "") -> Dict[str, any]:
             "LLM returned invalid JSON - retrying might help"
         )
     except Exception:
-        return _empty_result("LLM call failed: Invalid or missing API_KEY")
+        return _empty_result("LLM call failed: Invalid or missing GROQ_API_KEY")
 
 
 # ═══════════════════════════════════════════════════════════════

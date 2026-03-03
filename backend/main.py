@@ -121,7 +121,7 @@ def root():
 def health():
     return {
         "status": "ok",
-        "api_key_configured": bool(os.getenv("API_KEY"))
+        "api_key_configured": bool(os.getenv("GROQ_API_KEY"))
     }
 
 
