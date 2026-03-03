@@ -3217,6 +3217,81 @@ body.landing-page {
   }
 }
 
+@media (max-width: 768px) {
+  .glass-topbar {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    min-height: 50px !important;
+    height: 50px !important;
+    padding: 6px 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    z-index: 2 !important;
+    flex: 0 0 auto !important;
+    min-width: 44px !important;
+    max-width: 40% !important;
+  }
+
+  .topbar-left {
+    justify-content: flex-start !important;
+  }
+
+  .topbar-right {
+    justify-content: flex-end !important;
+    margin-left: auto !important;
+  }
+
+  .topbar-center {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    max-width: 60% !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+
+  .topbar-center .badge-pill,
+  .badge-pill {
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+    padding: 5px 8px !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .user-avatar,
+  .user-avatar img,
+  #userAvatarContainer,
+  #userAvatarImg {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 50% !important;
+    display: block !important;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
