@@ -24,8 +24,10 @@ import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 # Import our modules
 from modules.preprocessor import preprocess_text
@@ -44,10 +46,16 @@ from modules.insight_engine import (
 # Load environment variables
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
+ENV_MODE = os.getenv("ENV", "development").strip().lower()
+IS_PRODUCTION = ENV_MODE == "production"
 
 
 def _parse_allowed_origins(raw_origins: str) -> list[str]:
     return [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
+
+
+def _parse_csv_values(raw_values: str) -> list[str]:
+    return [value.strip() for value in raw_values.split(",") if value.strip()]
 
 # ═══════════════════════════════════════════════════════════════
 #  FASTAPI APP INITIALIZATION
@@ -81,14 +89,25 @@ frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 allowed_origins = _parse_allowed_origins(
     os.getenv(
         "ALLOWED_ORIGINS",
-        "http://localhost:3000,http://localhost:5173,http://localhost:5500,http://127.0.0.1:5500"
+        ""
     )
 )
 if frontend_url and frontend_url not in allowed_origins:
     allowed_origins.append(frontend_url)
 
+if IS_PRODUCTION:
+    allowed_origins = [
+        origin for origin in allowed_origins
+        if "localhost" not in origin and "127.0.0.1" not in origin
+    ]
+
 # Optional regex for preview deployments (example: Vercel preview URLs)
-origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"^https://.*\.vercel\.app$")
+origin_regex = os.getenv("CORS_ORIGIN_REGEX", "").strip() or None
+
+if IS_PRODUCTION and not allowed_origins and not origin_regex:
+    # Keep startup non-blocking on Render even if CORS env vars are missing.
+    # Set ALLOWED_ORIGINS and/or CORS_ORIGIN_REGEX in production for stricter control.
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -98,6 +117,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if IS_PRODUCTION:
+    app.add_middleware(HTTPSRedirectMiddleware)
+    trusted_hosts = _parse_csv_values(
+        os.getenv("ALLOWED_HOSTS", "*.onrender.com")
+    )
+    if trusted_hosts:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=trusted_hosts
+        )
 
 # ═══════════════════════════════════════════════════════════════
 #  REQUEST/RESPONSE MODELS
@@ -122,8 +152,8 @@ class LoginRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "email": "admin@painpoint.ai",
-                "password": "admin123"
+                "email": "admin@yourcompany.com",
+                "password": "********"
             }
         }
 
@@ -145,7 +175,7 @@ def root():
 
 
 @app.get("/api/health", tags=["Health"])
-def health_check():
+def health():
     """
     Health check endpoint with API key validation.
     
@@ -154,33 +184,24 @@ def health_check():
     - api_key_configured: Whether API key is set
     - message: Status message
     """
-    api_key = os.getenv("API_KEY", "")
-    key_configured = bool(api_key and api_key != "your_api_key_here")
-    
-    return {
-        "status": "ok",
-        "environment": os.getenv("ENV", "development"),
-        "api_key_configured": key_configured,
-        "allowed_origins": allowed_origins,
-        "message": (
-            "✅ API key configured. Ready to analyze."
-            if key_configured
-            else "⚠️  WARNING: API_KEY not set. Please update your .env file."
-        )
-    }
+    return {"status": "ok"}
 
 
 @app.post("/api/login", tags=["Auth"])
 def login(request: LoginRequest):
     """
-    Simple authentication endpoint.
-    
-    Demo credentials:
-    - email: admin@painpoint.ai
-    - password: admin123
+    Authentication endpoint using environment-based credentials.
     """
-    # Demo authentication (in production, use real database)
-    if request.email == "admin@painpoint.ai" and request.password == "admin123":
+    auth_email = os.getenv("AUTH_EMAIL", "").strip().lower()
+    auth_password = os.getenv("AUTH_PASSWORD", "")
+
+    if not auth_email or not auth_password:
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication is not configured on the server"
+        )
+
+    if request.email.strip().lower() == auth_email and request.password == auth_password:
         return {
             "success": True,
             "token": f"token_{request.email}_{os.urandom(16).hex()}",
@@ -387,36 +408,6 @@ def analyse_single(request: SingleFeedbackRequest):
 
 
 # ═══════════════════════════════════════════════════════════════
-#  STARTUP EVENT
-# ═══════════════════════════════════════════════════════════════
-
-@app.on_event("startup")
-async def startup_event():
-    """
-    Runs when the API starts up.
-    Validates environment and prints status.
-    """
-    print("\n" + "="*60)
-    print("🔮  PAINPOINT AI - BACKEND API")
-    print("="*60)
-    print("Status: Starting up...")
-    
-    # Check API key
-    api_key = os.getenv("API_KEY", "")
-    if api_key and api_key != "your_api_key_here":
-        print("✅ API Key: Configured")
-    else:
-        print("⚠️  API Key: NOT CONFIGURED")
-        print("   Get your key at: https://platform.openai.com/api-keys")
-        print("   Add to backend/.env file")
-    
-    app_base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
-    print(f"\n📚 API Documentation: {app_base_url}/docs")
-    print(f"🏥 Health Check: {app_base_url}/api/health")
-    print("="*60 + "\n")
-
-
-# ═══════════════════════════════════════════════════════════════
 #  ERROR HANDLERS
 # ═══════════════════════════════════════════════════════════════
 
@@ -425,11 +416,13 @@ async def global_exception_handler(request, exc):
     """
     Catch-all error handler for unexpected errors.
     """
+    error_message = "Internal server error" if IS_PRODUCTION else str(exc)
+    error_type = "InternalError" if IS_PRODUCTION else type(exc).__name__
     return JSONResponse(
         status_code=500,
         content={
             "success": False,
-            "error": str(exc),
-            "type": type(exc).__name__
+            "error": error_message,
+            "type": error_type
         }
     )

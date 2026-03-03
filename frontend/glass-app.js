@@ -5,7 +5,7 @@
 
 // ── Configuration ─────────────────────────────────────────────
 const DEFAULT_API_BASE = normalizeApiBase(
-  window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000'
+  window.APP_CONFIG?.API_BASE_URL || 'https://painpoint-backend.onrender.com'
 );
 let API_BASE = resolveApiBaseUrl();
 let currentView = 'overview';
@@ -322,7 +322,6 @@ function loadSidebarState() {
   const sidebar = document.getElementById('sidebar');
   const mainContainer = document.querySelector('.main-container');
   if (!sidebar || !mainContainer) {
-    console.warn('Sidebar or main-container element not found');
     return;
   }
   
@@ -1149,7 +1148,6 @@ async function exportToPDF() {
     await delay(120);
     showNotification('PDF downloaded successfully', 'success');
   } catch (error) {
-    console.error('PDF export failed:', error);
     showNotification('Failed to export PDF. Please try again.', 'error');
   } finally {
     hideLoading();
@@ -1194,7 +1192,7 @@ function yieldToMainThread() {
 
 function exportToCSV() {
   if (!allResults.length) {
-    alert('No results to export. Run analysis first.');
+    showNotification('No results to export. Run analysis first.', 'warning');
     return;
   }
   
@@ -1219,7 +1217,7 @@ function exportToCSV() {
 
 function exportToJSON() {
   if (!analysisData) {
-    alert('No analysis data available. Run analysis first.');
+    showNotification('No analysis data available. Run analysis first.', 'warning');
     return;
   }
   
@@ -1244,7 +1242,7 @@ function handleAvatarUpload(e) {
 
   // Validate file is an image
   if (!file.type.startsWith('image/')) {
-    alert('Please select a valid image file');
+    showNotification('Please select a valid image file', 'warning');
     return;
   }
 
@@ -1265,7 +1263,7 @@ function handleAvatarUpload(e) {
   };
 
   reader.onerror = () => {
-    alert('Error reading file. Please try again.');
+    showNotification('Error reading file. Please try again.', 'error');
   };
 
   reader.readAsDataURL(file);

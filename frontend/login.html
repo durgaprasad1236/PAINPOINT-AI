@@ -470,7 +470,7 @@
 
     function resolveApiUrl() {
       const saved = normalizeApiBase(localStorage.getItem('backendUrlInput') || '');
-      const configured = normalizeApiBase(window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000');
+      const configured = normalizeApiBase(window.APP_CONFIG?.API_BASE_URL || 'https://painpoint-backend.onrender.com');
       const selected = saved || configured;
 
       if (window.location.protocol === 'https:' && selected.startsWith('http://')) {
@@ -520,35 +520,30 @@
           // Error
           errorBox.classList.add('show');
           document.getElementById('errorMsg').textContent =
-            data.detail || data.message || 'Invalid credentials. Try: admin@painpoint.ai / admin123';
+            data.detail || data.message || 'Invalid credentials';
           loginBtn.disabled = false;
           btnText.classList.remove('hidden');
           btnLoading.classList.add('hidden');
         }
       } catch (error) {
-        // Fallback for demo (if backend not running)
-        const DEMO_EMAIL = 'admin@painpoint.ai';
-        const DEMO_PASSWORD = 'admin123';
-
-        if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
-          localStorage.setItem('authToken', 'demo_token_' + Date.now());
-          if (remember) {
-            localStorage.setItem('rememberMe', 'true');
-          }
-          window.location.href = 'dashboard.html';
-        } else {
-          errorBox.classList.add('show');
-          document.getElementById('errorMsg').textContent = 
-            'Backend unavailable. Demo mode: admin@painpoint.ai / admin123';
-          loginBtn.disabled = false;
-          btnText.classList.remove('hidden');
-          btnLoading.classList.add('hidden');
-        }
+        errorBox.classList.add('show');
+        document.getElementById('errorMsg').textContent =
+          'Backend unavailable. Please try again in a few moments.';
+        loginBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
       }
     });
 
     // OAuth buttons (demo only)
     document.getElementById('googleBtn').addEventListener('click', () => {
+      const googleClientId = window.APP_CONFIG?.GOOGLE_CLIENT_ID || '';
+      if (!googleClientId || !window.google?.accounts?.id) {
+        errorBox.classList.add('show');
+        document.getElementById('errorMsg').textContent = 'Google sign-in is not enabled.';
+        return;
+      }
+
       // Trigger Google Sign-In
       google.accounts.id.renderButton(
         document.getElementById('googlebtn'),
@@ -559,8 +554,13 @@
 
     // Initialize Google Sign-In
     function initGoogleSignIn() {
+      const googleClientId = window.APP_CONFIG?.GOOGLE_CLIENT_ID || '';
+      if (!googleClientId) {
+        return;
+      }
+
       google.accounts.id.initialize({
-        client_id: 'AIzaSyAM62-Zit8oQMEH5s0a90Dwu_benexEkek',
+        client_id: googleClientId,
         callback: handleGoogleSignIn,
         ux_mode: 'popup'
       });
@@ -610,12 +610,14 @@
     window.addEventListener('load', initGoogleSignIn);
 
     document.getElementById('githubBtn').addEventListener('click', () => {
-      alert('GitHub OAuth integration coming soon!');
+      errorBox.classList.add('show');
+      document.getElementById('errorMsg').textContent = 'GitHub OAuth integration is not enabled.';
     });
 
     document.getElementById('resetLink').addEventListener('click', (e) => {
       e.preventDefault();
-      alert('Password reset: Send reset link to email');
+      errorBox.classList.add('show');
+      document.getElementById('errorMsg').textContent = 'Password reset is not enabled.';
     });
 
     // Check if already logged in
