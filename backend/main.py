@@ -1,20 +1,4 @@
-"""
-main.py
--------
-FastAPI backend for PainPoint AI - Consumer Intelligence Platform
-
-This is the main entry point for the backend API.
-
-Endpoints:
-- GET  /              → Health check
-- GET  /api/health    → API status + key validation
-- POST /api/analyse   → Batch analysis (CSV or text)
-- POST /api/analyse-single → Single feedback analysis
-- GET  /docs          → Auto-generated Swagger UI
-
-Architecture:
-Input → Preprocessing → ML Layer → LLM Engine → Insight Engine → Response
-"""
+"""FastAPI backend for PainPoint AI."""
 
 import io
 import os
@@ -49,43 +33,13 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 ENV_MODE = os.getenv("ENV", "development").strip().lower()
 IS_PRODUCTION = ENV_MODE == "production"
 
-
-def _parse_allowed_origins(raw_origins: str) -> list[str]:
-    return [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
-
-
-def _parse_csv_values(raw_values: str) -> list[str]:
-    return [value.strip() for value in raw_values.split(",") if value.strip()]
-
 # ═══════════════════════════════════════════════════════════════
 #  FASTAPI APP INITIALIZATION
 # ═══════════════════════════════════════════════════════════════
 
-app = FastAPI(
-    title="PainPoint AI - Backend API",
-    description=(
-        "🔮 AI Consumer Pain-Point Miner & Intelligent Solution Generator\n\n"
-        "This API provides LLM-powered customer feedback analysis with:\n"
-        "- Pain-point detection\n"
-        "- Category classification\n"
-        "- Severity evaluation\n"
-        "- Emotion detection\n"
-        "- Root cause analysis\n"
-        "- Intelligent solution generation\n"
-        "- Priority scoring (Frequency × Severity)\n"
-        "- Executive insight summary\n\n"
-        "Powered by Groq LLaMA 3 + scikit-learn ML"
-    ),
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
+app = FastAPI()
 
-# ═══════════════════════════════════════════════════════════════
-#  CORS MIDDLEWARE (Allow Frontend to Connect)
-# ═══════════════════════════════════════════════════════════════
-
-allowed_origins = [
+origins = [
     "https://painpoint-ai-psi.vercel.app",
     "https://painpoint-ai.vercel.app",
     "http://localhost:3000",
@@ -94,7 +48,7 @@ allowed_origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -102,9 +56,11 @@ app.add_middleware(
 
 if IS_PRODUCTION:
     app.add_middleware(HTTPSRedirectMiddleware)
-    trusted_hosts = _parse_csv_values(
-        os.getenv("ALLOWED_HOSTS", "*.onrender.com")
-    )
+    trusted_hosts = [
+        value.strip()
+        for value in os.getenv("ALLOWED_HOSTS", "*.onrender.com").split(",")
+        if value.strip()
+    ]
     if trusted_hosts:
         app.add_middleware(
             TrustedHostMiddleware,
