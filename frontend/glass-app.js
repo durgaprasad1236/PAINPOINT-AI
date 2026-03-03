@@ -5,7 +5,7 @@
 
 // ── Configuration ─────────────────────────────────────────────
 const DEFAULT_API_BASE = normalizeApiBase(
-  window.APP_CONFIG?.API_BASE_URL || 'https://painpoint-backend.onrender.com'
+  window.APP_CONFIG?.API_BASE_URL || ''
 );
 let API_BASE = resolveApiBaseUrl();
 let currentView = 'overview';
@@ -19,8 +19,7 @@ function normalizeApiBase(url) {
 }
 
 function resolveApiBaseUrl() {
-  const savedBaseUrl = normalizeApiBase(localStorage.getItem('backendUrlInput') || '');
-  const baseUrl = savedBaseUrl || DEFAULT_API_BASE;
+  const baseUrl = normalizeApiBase(window.APP_CONFIG?.API_BASE_URL || DEFAULT_API_BASE);
 
   if (window.location.protocol === 'https:' && baseUrl.startsWith('http://')) {
     return baseUrl.replace(/^http:\/\//i, 'https://');
