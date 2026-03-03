@@ -85,34 +85,15 @@ app = FastAPI(
 #  CORS MIDDLEWARE (Allow Frontend to Connect)
 # ═══════════════════════════════════════════════════════════════
 
-frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
-allowed_origins = _parse_allowed_origins(
-    os.getenv(
-        "ALLOWED_ORIGINS",
-        ""
-    )
-)
-if frontend_url and frontend_url not in allowed_origins:
-    allowed_origins.append(frontend_url)
-
-if IS_PRODUCTION:
-    allowed_origins = [
-        origin for origin in allowed_origins
-        if "localhost" not in origin and "127.0.0.1" not in origin
-    ]
-
-# Optional regex for preview deployments (example: Vercel preview URLs)
-origin_regex = os.getenv("CORS_ORIGIN_REGEX", "").strip() or None
-
-if IS_PRODUCTION and not allowed_origins and not origin_regex:
-    # Keep startup non-blocking on Render even if CORS env vars are missing.
-    # Set ALLOWED_ORIGINS and/or CORS_ORIGIN_REGEX in production for stricter control.
-    allowed_origins = ["*"]
+allowed_origins = [
+    "https://painpoint-ai-psi.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:5500",
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
