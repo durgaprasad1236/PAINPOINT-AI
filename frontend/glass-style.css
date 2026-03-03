@@ -2689,3 +2689,143 @@ body.landing-page {
     min-height: 44px;
   }
 }
+
+@media (max-width: 768px) {
+  /* Performance: disable expensive motion on mobile only */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Performance: reduce decorative layers */
+  .bg-particles,
+  .particles,
+  .landing-bg-glow,
+  .nav-glow {
+    display: none !important;
+  }
+
+  /* Performance: lighter glass blur (desktop remains unchanged) */
+  .glass-sidebar,
+  .glass-topbar,
+  .glass-card,
+  .glass-modal,
+  .search-glass,
+  .filter-glass,
+  .upload-zone,
+  .landing-glass {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Performance: avoid nested backdrop filters */
+  .glass-card .glass-card,
+  .glass-card .glass-modal,
+  .landing-glass .landing-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Performance: lighter shadows on mobile */
+  .glass-sidebar,
+  .glass-topbar,
+  .glass-card,
+  .glass-modal,
+  .landing-hero-card,
+  .landing-feature-card,
+  .landing-cta,
+  .btn-gradient,
+  .landing-btn-primary {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* Layout: remove fixed-style widths and tighten spacing */
+  .landing-main,
+  .landing-nav-wrap,
+  .main-container,
+  .glass-modal {
+    width: calc(100% - 24px);
+    max-width: 100%;
+  }
+
+  .landing-hero,
+  .main-container {
+    padding: 16px 0;
+  }
+
+  .landing-hero-card,
+  .landing-feature-card,
+  .landing-cta,
+  .glass-card,
+  .glass-modal,
+  .glass-topbar {
+    padding: 16px !important;
+  }
+
+  /* Mobile typography and spacing */
+  .landing-hero-card h1 {
+    font-size: clamp(1.9rem, 10vw, 2.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+
+  .landing-subtext,
+  .page-subtitle {
+    font-size: clamp(0.92rem, 4vw, 1.02rem);
+    line-height: 1.5;
+  }
+
+  .landing-features h2,
+  .landing-cta h2,
+  .page-title {
+    font-size: clamp(1.4rem, 7.6vw, 2rem);
+    line-height: 1.1;
+  }
+
+  /* Mobile actions: stack buttons vertically */
+  .landing-hero-actions,
+  .topbar-right,
+  .modal-footer,
+  .button-group,
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .landing-btn,
+  .btn-gradient,
+  .btn-outline,
+  .btn-icon {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+  }
+
+  .landing-nav {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .landing-nav-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .landing-features-grid,
+  .stats-grid,
+  .charts-row,
+  .results-detail-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Scrolling smoothness */
+  body,
+  .main-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
