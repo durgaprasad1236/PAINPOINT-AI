@@ -374,7 +374,7 @@
     </div>
 
     <!-- Login Form -->
-    <form id="loginForm">
+    <form id="loginForm" onsubmit="event.preventDefault(); login();">
       <div class="form-group">
         <label class="form-label" for="email">Email Address</label>
         <div class="input-wrapper">
@@ -420,7 +420,7 @@
         <label for="remember" class="checkbox-label">Remember me for 30 days</label>
       </div>
 
-      <button type="submit" class="btn-primary" id="loginBtn">
+      <button type="button" class="btn-primary" id="loginBtn" onclick="login()">
         <span id="btnText">Sign In to Platform</span>
         <span id="btnLoading" class="hidden"><span class="spinner"></span></span>
       </button>
@@ -445,186 +445,7 @@
   </div>
 
   <script src="config.js"></script>
-  <script>
-    // Generate floating particles
-    const particlesEl = document.getElementById('particles');
-    for (let i = 0; i < 30; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-      particle.style.animationDelay = Math.random() * 5 + 's';
-      particlesEl.appendChild(particle);
-    }
-
-    // Form handling
-    const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
-    const btnText = document.getElementById('btnText');
-    const btnLoading = document.getElementById('btnLoading');
-    const errorBox = document.getElementById('errorBox');
-
-    function normalizeApiBase(url) {
-      return (url || '').trim().replace(/\/$/, '');
-    }
-
-    function resolveApiUrl() {
-      const saved = normalizeApiBase(localStorage.getItem('backendUrlInput') || '');
-      const configured = normalizeApiBase(window.APP_CONFIG?.API_BASE_URL || 'https://painpoint-backend.onrender.com');
-      const selected = saved || configured;
-
-      if (window.location.protocol === 'https:' && selected.startsWith('http://')) {
-        return selected.replace(/^http:\/\//i, 'https://');
-      }
-
-      return selected;
-    }
-
-    // API base URL
-    const API_URL = resolveApiUrl();
-
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const remember = document.getElementById('remember').checked;
-
-      errorBox.classList.remove('show');
-      loginBtn.disabled = true;
-      btnText.classList.add('hidden');
-      btnLoading.classList.remove('hidden');
-
-      try {
-        // Call backend authentication endpoint
-        const response = await fetch(API_URL + '/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          // Success - store auth token
-          localStorage.setItem('authToken', data.token);
-          if (remember) {
-            localStorage.setItem('rememberMe', 'true');
-          }
-          
-          // Redirect to dashboard
-          window.location.href = 'dashboard.html';
-        } else {
-          // Error
-          errorBox.classList.add('show');
-          document.getElementById('errorMsg').textContent =
-            data.detail || data.message || 'Invalid credentials';
-          loginBtn.disabled = false;
-          btnText.classList.remove('hidden');
-          btnLoading.classList.add('hidden');
-        }
-      } catch (error) {
-        errorBox.classList.add('show');
-        document.getElementById('errorMsg').textContent =
-          'Backend unavailable. Please try again in a few moments.';
-        loginBtn.disabled = false;
-        btnText.classList.remove('hidden');
-        btnLoading.classList.add('hidden');
-      }
-    });
-
-    // OAuth buttons (demo only)
-    document.getElementById('googleBtn').addEventListener('click', () => {
-      const googleClientId = window.APP_CONFIG?.GOOGLE_CLIENT_ID || '';
-      if (!googleClientId || !window.google?.accounts?.id) {
-        errorBox.classList.add('show');
-        document.getElementById('errorMsg').textContent = 'Google sign-in is not enabled.';
-        return;
-      }
-
-      // Trigger Google Sign-In
-      google.accounts.id.renderButton(
-        document.getElementById('googlebtn'),
-        { theme: 'outline', size: 'large' }
-      );
-      document.getElementById('googlebtn').querySelector('div[role="button"]')?.click();
-    });
-
-    // Initialize Google Sign-In
-    function initGoogleSignIn() {
-      const googleClientId = window.APP_CONFIG?.GOOGLE_CLIENT_ID || '';
-      if (!googleClientId) {
-        return;
-      }
-
-      google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: handleGoogleSignIn,
-        ux_mode: 'popup'
-      });
-    }
-
-    function handleGoogleSignIn(response) {
-      if (response.credential) {
-        loginBtn.disabled = true;
-        btnText.classList.add('hidden');
-        btnLoading.classList.remove('hidden');
-        errorBox.classList.remove('show');
-
-        // Send token to backend for verification
-        fetch(API_URL + '/api/verify-google-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            token: response.credential
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            localStorage.setItem('authToken', data.token);
-            window.location.href = 'dashboard.html';
-          } else {
-            errorBox.classList.add('show');
-            document.getElementById('errorMsg').textContent = data.message || 'Google sign-in failed';
-            loginBtn.disabled = false;
-            btnText.classList.remove('hidden');
-            btnLoading.classList.add('hidden');
-          }
-        })
-        .catch(err => {
-          errorBox.classList.add('show');
-          document.getElementById('errorMsg').textContent = 'Sign-in error: ' + err.message;
-          loginBtn.disabled = false;
-          btnText.classList.remove('hidden');
-          btnLoading.classList.add('hidden');
-        });
-      }
-    }
-
-    // Initialize Google Sign-In when page loads
-    window.addEventListener('load', initGoogleSignIn);
-
-    document.getElementById('githubBtn').addEventListener('click', () => {
-      errorBox.classList.add('show');
-      document.getElementById('errorMsg').textContent = 'GitHub OAuth integration is not enabled.';
-    });
-
-    document.getElementById('resetLink').addEventListener('click', (e) => {
-      e.preventDefault();
-      errorBox.classList.add('show');
-      document.getElementById('errorMsg').textContent = 'Password reset is not enabled.';
-    });
-
-    // Check if already logged in
-    if (localStorage.getItem('authToken')) {
-      window.location.href = 'dashboard.html';
-    }
-  </script>
+  <script src="glass-app.js"></script>
 
 </body>
 </html>

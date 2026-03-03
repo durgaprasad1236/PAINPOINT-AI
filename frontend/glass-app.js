@@ -87,6 +87,11 @@ async function apiFetch(path, options = {}, maxRetries = 1, timeoutMs = 45000) {
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  if (isLoginPage()) {
+    initLoginPage();
+    return;
+  }
+
   checkAuth();
   setupEventListeners();
   checkApiHealth();
@@ -94,6 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   loadSidebarState();
 });
+
+function isLoginPage() {
+  return Boolean(document.getElementById('loginForm'));
+}
 
 // ── Auth Check ────────────────────────────────────────────────
 function checkAuth() {
@@ -110,6 +119,155 @@ function logout() {
   localStorage.removeItem('rememberMe');
   window.location.href = 'login.html';
 }
+
+function initLoginPage() {
+  if (localStorage.getItem('authToken')) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  generateLoginParticles();
+
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await login();
+    });
+  }
+
+  const resetLink = document.getElementById('resetLink');
+  if (resetLink) {
+    resetLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      showLoginError('Password reset is not enabled.');
+    });
+  }
+
+  const googleBtn = document.getElementById('googleBtn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', () => {
+      showLoginError('Google sign-in is not enabled.');
+    });
+  }
+
+  const githubBtn = document.getElementById('githubBtn');
+  if (githubBtn) {
+    githubBtn.addEventListener('click', () => {
+      showLoginError('GitHub OAuth integration is not enabled.');
+    });
+  }
+}
+
+function generateLoginParticles() {
+  const particlesEl = document.getElementById('particles');
+  if (!particlesEl) return;
+
+  particlesEl.innerHTML = '';
+  for (let index = 0; index < 30; index += 1) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = `${Math.random() * 100}%`;
+    particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+    particle.style.animationDelay = `${Math.random() * 5}s`;
+    particlesEl.appendChild(particle);
+  }
+}
+
+function setLoginLoadingState(isLoading) {
+  const loginBtn = document.getElementById('loginBtn');
+  const btnText = document.getElementById('btnText');
+  const btnLoading = document.getElementById('btnLoading');
+
+  if (loginBtn) loginBtn.disabled = isLoading;
+  if (btnText) btnText.classList.toggle('hidden', isLoading);
+  if (btnLoading) btnLoading.classList.toggle('hidden', !isLoading);
+}
+
+function showLoginError(message) {
+  const errorBox = document.getElementById('errorBox');
+  const errorMsg = document.getElementById('errorMsg');
+
+  if (errorMsg) {
+    errorMsg.textContent = message;
+  }
+
+  if (errorBox) {
+    errorBox.classList.add('show');
+  }
+}
+
+function hideLoginError() {
+  const errorBox = document.getElementById('errorBox');
+  if (errorBox) {
+    errorBox.classList.remove('show');
+  }
+}
+
+async function login() {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const rememberInput = document.getElementById('remember');
+
+  if (!emailInput || !passwordInput) {
+    return;
+  }
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  const remember = Boolean(rememberInput?.checked);
+
+  if (!email || !password) {
+    showLoginError('Please enter your email and password.');
+    return;
+  }
+
+  if (!window.APP_CONFIG?.API_BASE_URL) {
+    showLoginError('Backend unavailable. Please try again in a few moments.');
+    return;
+  }
+
+  hideLoginError();
+  setLoginLoadingState(true);
+
+  try {
+    const response = await fetch(`${window.APP_CONFIG.API_BASE_URL}/api/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok || !payload.success) {
+      const detail = payload.detail || payload.message || 'Invalid email or password';
+      showLoginError(detail);
+      return;
+    }
+
+    localStorage.setItem('authToken', payload.token || 'authenticated');
+    if (remember) {
+      localStorage.setItem('rememberMe', 'true');
+    } else {
+      localStorage.removeItem('rememberMe');
+    }
+
+    window.location.href = 'dashboard.html';
+  } catch (error) {
+    showLoginError('Backend unavailable. Please try again in a few moments.');
+  } finally {
+    setLoginLoadingState(false);
+  }
+}
+
+window.login = login;
 
 // ── Event Listeners ───────────────────────────────────────────
 function setupEventListeners() {
