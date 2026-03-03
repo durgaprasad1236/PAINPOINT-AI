@@ -223,7 +223,7 @@ async function login() {
   }
 
   if (!window.APP_CONFIG?.API_BASE_URL) {
-    showLoginError('Backend unavailable. Please try again in a few moments.');
+    showLoginError('Backend unavailable');
     return;
   }
 
@@ -261,7 +261,7 @@ async function login() {
 
     window.location.href = 'dashboard.html';
   } catch (error) {
-    showLoginError('Backend unavailable. Please try again in a few moments.');
+    showLoginError('Backend unavailable');
   } finally {
     setLoginLoadingState(false);
   }
