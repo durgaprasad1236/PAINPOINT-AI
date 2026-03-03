@@ -3002,6 +3002,87 @@ body.landing-page {
   }
 }
 
+@media (max-width: 768px) {
+  .glass-topbar {
+    min-height: 52px !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .topbar-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .page-title-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+  }
+
+  .page-title {
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.8rem !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    opacity: 0.9;
+  }
+
+  .topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    flex: 0 0 auto !important;
+    min-width: fit-content !important;
+  }
+
+  .badge-pill {
+    padding: 5px 8px !important;
+    font-size: 0.7rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    max-width: 130px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    gap: 4px !important;
+  }
+
+  .user-avatar,
+  .user-avatar img,
+  #userAvatarContainer,
+  #userAvatarImg {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 50% !important;
+    display: block;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
