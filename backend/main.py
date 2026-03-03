@@ -54,6 +54,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/cors-test", tags=["Health"])
+def cors_test():
+    return {"status": "ok", "cors": "enabled"}
+
 if IS_PRODUCTION:
     app.add_middleware(HTTPSRedirectMiddleware)
     trusted_hosts = [
