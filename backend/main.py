@@ -87,6 +87,7 @@ app = FastAPI(
 
 allowed_origins = [
     "https://painpoint-ai-psi.vercel.app",
+    "https://painpoint-ai.vercel.app",
     "http://localhost:3000",
     "http://127.0.0.1:5500",
 ]
