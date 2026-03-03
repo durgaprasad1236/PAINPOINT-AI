@@ -2480,6 +2480,112 @@ body.landing-page {
   transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
 }
 
+@media (max-width: 768px) {
+  .landing-main,
+  .landing-nav-wrap {
+    width: calc(100% - 24px);
+  }
+
+  .landing-glass {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .landing-bg-glow {
+    filter: blur(60px);
+    opacity: 0.35;
+  }
+
+  .landing-nav {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+  }
+
+  .landing-nav-links {
+    width: 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .landing-hero {
+    min-height: auto;
+    padding: 20px 0;
+  }
+
+  .landing-hero-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 16px;
+  }
+
+  .landing-hero-card h1 {
+    font-size: clamp(1.95rem, 10vw, 2.7rem);
+    line-height: 1.05;
+  }
+
+  .landing-subtext {
+    margin-top: 14px;
+    font-size: clamp(0.95rem, 4.2vw, 1.05rem);
+    line-height: 1.55;
+  }
+
+  .landing-hero-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .landing-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 11px 16px;
+    transition: none;
+  }
+
+  .landing-btn:hover,
+  .landing-btn-primary:hover,
+  .landing-feature-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .landing-features {
+    margin-top: 20px;
+  }
+
+  .landing-features h2 {
+    font-size: clamp(1.6rem, 8vw, 2.1rem);
+    margin-bottom: 14px;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .landing-feature-card {
+    padding: 18px;
+    transition: none;
+  }
+
+  .landing-cta-wrap {
+    margin-top: 22px;
+  }
+
+  .landing-cta {
+    padding: 22px 16px;
+  }
+
+  .landing-cta h2 {
+    font-size: clamp(1.7rem, 8.2vw, 2.3rem);
+    margin-bottom: 14px;
+  }
+}
+
 .landing-btn:hover {
   transform: translateY(-2px);
 }
@@ -2575,16 +2681,11 @@ body.landing-page {
 }
 
 @media (max-width: 480px) {
-  .landing-main,
-  .landing-nav-wrap {
-    width: calc(100% - 24px);
-  }
-
   .landing-hero-card {
-    padding: 24px 16px;
+    padding: 20px 14px;
   }
 
   .landing-btn {
-    width: 100%;
+    min-height: 44px;
   }
 }
