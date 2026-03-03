@@ -2877,6 +2877,131 @@ body.landing-page {
   }
 }
 
+@media (max-width: 768px) {
+  .main-container,
+  .view-container,
+  .content-wrapper,
+  .dashboard-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .glass-card,
+  .stat-card,
+  .chart-card,
+  .insight-card,
+  .analysis-panel,
+  .solution-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16) !important;
+  }
+
+  .glass-topbar {
+    min-height: 54px !important;
+    height: auto !important;
+    padding: 10px 12px !important;
+    margin-bottom: 10px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14) !important;
+  }
+
+  .page-title {
+    font-size: 1.1rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .page-subtitle,
+  .status-label,
+  .status-value,
+  .card-subtitle,
+  .helper-text {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .stats-grid,
+  .charts-row,
+  .intelligence-row,
+  .results-detail-container,
+  .analysis-grid,
+  .insights-grid,
+  .export-grid,
+  .table-grid,
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .topbar-left,
+  .topbar-right,
+  .filters-row,
+  .actions-row,
+  .button-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .topbar-right {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+
+  .glass-table-wrapper,
+  .table-container,
+  .table-wrap,
+  .results-table-wrap,
+  .table-scroll {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .glass-table,
+  table {
+    min-width: 640px !important;
+  }
+
+  .view,
+  .tab-content,
+  .section,
+  .chart-section,
+  .insight-section {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .empty-state,
+  .about-hero,
+  .modal-body,
+  .modal-footer {
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .main-container > *:last-child,
+  .view:last-child,
+  .tab-content:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+}
+
 /* ── Final Mobile Optimization (Dashboard + Landing) ───────── */
 @media (max-width: 768px) {
   body {
