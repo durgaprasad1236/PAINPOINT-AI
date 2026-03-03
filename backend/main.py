@@ -119,15 +119,10 @@ def root():
 
 @app.get("/api/health", tags=["Health"])
 def health():
-    """
-    Health check endpoint with API key validation.
-    
-    Returns:
-    - status: API operational status
-    - api_key_configured: Whether API key is set
-    - message: Status message
-    """
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "api_key_configured": bool(os.getenv("API_KEY"))
+    }
 
 
 @app.post("/api/login", tags=["Auth"])
